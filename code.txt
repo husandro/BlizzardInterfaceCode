@@ -1,0 +1,6 @@
+-console
+
+`
+exportInterfaceFiles code
+exportInterfaceFiles art
+exportInterfaceFiles Resources
