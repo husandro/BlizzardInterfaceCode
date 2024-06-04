@@ -235,11 +235,6 @@ function LFGListFrame_OnEvent(self, event, ...)
 			ChatFrame_DisplaySystemMessageInPrimary(chatMessage:format(kstringGroupName));
 		end
 
-		if IsDeclined(newStatus) then
-			self.declines = self.declines or {};
-			self.declines[searchResultID] = newStatus;
-		end
-
 		LFGListSearchPanel_UpdateResultList(LFGListFrame.SearchPanel)
 	elseif ( event == "GROUP_ROSTER_UPDATE" ) then
 		if ( not IsInGroup(LE_PARTY_CATEGORY_HOME) ) then
@@ -2042,21 +2037,15 @@ function LFGListApplicantMember_OnEnter(self)
 			GameTooltip:AddDoubleLine(DUNGEON_SCORE, color:WrapTextInColorCode(dungeonScore));
 
 			local function AddDungeonScore(leftText, dungeonScoreStruct)
-				if not dungeonScoreStruct then
-					return;
-				end
-
-				local color = C_ChallengeMode.GetSpecificDungeonOverallScoreRarityColor(dungeonScoreStruct.mapScore);
-				if (not color) then
-					color = HIGHLIGHT_FONT_COLOR;
-				end
-
-				if dungeonScoreStruct.mapScore == 0 then
-					GameTooltip_AddNormalLine(GameTooltip, DUNGEON_SCORE_PER_DUNGEON_NO_RATING:format(dungeonScoreStruct.mapName, dungeonScoreStruct.mapScore));
-				elseif dungeonScoreStruct.finishedSuccess then
-					GameTooltip:AddDoubleLine(leftText, MakeRunLevelWithIncrement(dungeonScoreStruct).." "..color:WrapTextInColorCode(dungeonScoreStruct.mapName));
+				if not dungeonScoreStruct or dungeonScoreStruct.mapScore == 0 or not dungeonScoreStruct.finishedSuccess then
+					GameTooltip:AddDoubleLine(leftText, GRAY_FONT_COLOR:WrapTextInColorCode(DUNGEON_SCORE_LINK_NO_SCORE));
 				else
-					GameTooltip_AddNormalLine(GameTooltip, DUNGEON_SCORE_DUNGEON_RATING_OVERTIME:format(dungeonScoreStruct.mapName, color:WrapTextInColorCode(dungeonScoreStruct.mapScore), dungeonScoreStruct.bestRunLevel));
+					local color = C_ChallengeMode.GetSpecificDungeonOverallScoreRarityColor(dungeonScoreStruct.mapScore);
+					if not color then
+						color = HIGHLIGHT_FONT_COLOR;
+					end
+
+					GameTooltip:AddDoubleLine(leftText, MakeRunLevelWithIncrement(dungeonScoreStruct).." "..color:WrapTextInColorCode(dungeonScoreStruct.mapName));
 				end
 			end
 
@@ -2349,9 +2338,6 @@ end
 
 function LFGListSearchPanelUtil_CanSelectResult(resultID)
 	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
-	if LFGListFrame.declines and LFGListFrame.declines[resultID] then
-		appStatus = LFGListFrame.declines[resultID];
-	end
 	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
 	if ( appStatus ~= "none" or pendingStatus or searchResultInfo.isDelisted ) then
 		return false;
@@ -2676,7 +2662,7 @@ local function EntryStillSatisfiesFilters(enabled, displayData, searchResultInfo
 		return false;
 	elseif enabled.hasHealer and displayData["HEALER"] == 0 then
 		return false;
-	elseif enabled.minimumRating > searchResultInfo.leaderOverallDungeonScore then
+	elseif enabled.minimumRating > (searchResultInfo.leaderOverallDungeonScore or 0) then
 		return false;
 	elseif #enabled.activities > 0 then
 		local foundActivity = false;
@@ -2705,19 +2691,13 @@ end
 function LFGListSearchEntry_Update(self)
 	local resultID = self.resultID;
 
-	if not C_LFGList.HasSearchResultInfo(resultID) then
+	if not resultID or not C_LFGList.HasSearchResultInfo(resultID) then
 		return;
 	end
 
 	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
 
 	local isDeclined = IsDeclined(appStatus);
-	if LFGListFrame.declines then
-		if not isDeclined and LFGListFrame.declines[resultID] then
-			isDeclined = true;
-			appStatus = LFGListFrame.declines[resultID];
-		end
-	end
 	local isApplication = (appStatus ~= "none" or pendingStatus);
 	local isAppFinished = LFGListUtil_IsStatusInactive(appStatus) or LFGListUtil_IsStatusInactive(pendingStatus);
 
@@ -2844,7 +2824,7 @@ function LFGListSearchEntry_Update(self)
 	self.VoiceChat:SetShown(searchResultInfo.voiceChat ~= "");
 	self.VoiceChat.tooltip = searchResultInfo.voiceChat;
 
-	local showClassesByRole = true;
+	local showClassesByRole = LFGListFrame.CategorySelection.selectedCategory == GROUP_FINDER_CATEGORY_ID_DUNGEONS
 	LFGListGroupDataDisplay_Update(self.DataDisplay, searchResultInfo.activityID, displayData, searchResultInfo.isDelisted, showClassesByRole);
 
 	local nameWidth = isApplication and 165 or 176;
@@ -3519,54 +3499,52 @@ local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
 	return false;
 end
 
-function LFGListUtil_SortSearchResultsCBFunction(self)
-	return function(searchResultID1, searchResultID2)
-		local searchResultInfo1 = C_LFGList.GetSearchResultInfo(searchResultID1);
-		local searchResultInfo2 = C_LFGList.GetSearchResultInfo(searchResultID2);
+function LFGListUtil_SortSearchResultsCB(searchResultID1, searchResultID2)
+	local searchResultInfo1 = C_LFGList.GetSearchResultInfo(searchResultID1);
+	local searchResultInfo2 = C_LFGList.GetSearchResultInfo(searchResultID2);
 
-		local hasRemainingRole1 = HasRemainingSlotsForLocalPlayerRole(searchResultID1);
-		local hasRemainingRole2 = HasRemainingSlotsForLocalPlayerRole(searchResultID2);
+	local hasRemainingRole1 = HasRemainingSlotsForLocalPlayerRole(searchResultID1);
+	local hasRemainingRole2 = HasRemainingSlotsForLocalPlayerRole(searchResultID2);
 
-		local _, appStatus1 = C_LFGList.GetApplicationInfo(searchResultID1);
-		local _, appStatus2 = C_LFGList.GetApplicationInfo(searchResultID2);
+	local _, appStatus1 = C_LFGList.GetApplicationInfo(searchResultID1);
+	local _, appStatus2 = C_LFGList.GetApplicationInfo(searchResultID2);
 
-		local isDeclined1 = IsDeclined(appStatus1) or ((self.declines and self.declines[searchResultID1]) and true or false);
-		local isDeclined2 = IsDeclined(appStatus2) or ((self.declines and self.declines[searchResultID2]) and true or false);
+	local isDeclined1 = IsDeclined(appStatus1);
+	local isDeclined2 = IsDeclined(appStatus2);
 
-		--sort declined to the bottom
-		if isDeclined1 ~= isDeclined2 then
-			return isDeclined2;
-		end
-
-		-- Groups with your current role available are preferred
-		if (hasRemainingRole1 ~= hasRemainingRole2) then
-			return hasRemainingRole1;
-		end
-
-		--If one has more friends, do that one first
-		if ( searchResultInfo1.numBNetFriends ~= searchResultInfo2.numBNetFriends ) then
-			return searchResultInfo1.numBNetFriends > searchResultInfo2.numBNetFriends;
-		end
-
-		if ( searchResultInfo1.numCharFriends ~= searchResultInfo2.numCharFriends ) then
-			return searchResultInfo1.numCharFriends > searchResultInfo2.numCharFriends;
-		end
-
-		if ( searchResultInfo1.numGuildMates ~= searchResultInfo2.numGuildMates ) then
-			return searchResultInfo1.numGuildMates > searchResultInfo2.numGuildMates;
-		end
-
-		if ( searchResultInfo1.isWarMode ~= searchResultInfo2.isWarMode ) then
-			return searchResultInfo1.isWarMode == C_PvP.IsWarModeDesired();
-		end
-
-		--If we aren't sorting by anything else, just go by ID
-		return searchResultID1 < searchResultID2;
+	--sort declined to the bottom
+	if isDeclined1 ~= isDeclined2 then
+		return isDeclined2;
 	end
+
+	-- Groups with your current role available are preferred
+	if (hasRemainingRole1 ~= hasRemainingRole2) then
+		return hasRemainingRole1;
+	end
+
+	--If one has more friends, do that one first
+	if ( searchResultInfo1.numBNetFriends ~= searchResultInfo2.numBNetFriends ) then
+		return searchResultInfo1.numBNetFriends > searchResultInfo2.numBNetFriends;
+	end
+
+	if ( searchResultInfo1.numCharFriends ~= searchResultInfo2.numCharFriends ) then
+		return searchResultInfo1.numCharFriends > searchResultInfo2.numCharFriends;
+	end
+
+	if ( searchResultInfo1.numGuildMates ~= searchResultInfo2.numGuildMates ) then
+		return searchResultInfo1.numGuildMates > searchResultInfo2.numGuildMates;
+	end
+
+	if ( searchResultInfo1.isWarMode ~= searchResultInfo2.isWarMode ) then
+		return searchResultInfo1.isWarMode == C_PvP.IsWarModeDesired();
+	end
+
+	--If we aren't sorting by anything else, just go by ID
+	return searchResultID1 < searchResultID2;
 end
 
 function LFGListUtil_SortSearchResults(self)
-	table.sort(self.results, LFGListUtil_SortSearchResultsCBFunction(self));
+	table.sort(self.results, LFGListUtil_SortSearchResultsCB);
 end
 
 function LFGListUtil_SortApplicantsCB(applicantID1, applicantID2)
@@ -3670,15 +3648,15 @@ function LFGListUtil_GetSearchEntryMenu(resultID)
 	local searchResultInfo = C_LFGList.GetSearchResultInfo(resultID);
 	local _, appStatus, pendingStatus, appDuration = C_LFGList.GetApplicationInfo(resultID);
 	LFG_LIST_SEARCH_ENTRY_MENU[1].text = searchResultInfo.name;
-	LFG_LIST_SEARCH_ENTRY_MENU[2].arg1 = searchResultInfo.leaderName;
+	LFG_LIST_SEARCH_ENTRY_MENU[2].arg1 = searchResultInfo.leaderName or "";
 	local applied = (appStatus == "applied" or appStatus == "invited");
 	LFG_LIST_SEARCH_ENTRY_MENU[2].disabled = not searchResultInfo.leaderName;
 	LFG_LIST_SEARCH_ENTRY_MENU[2].tooltipTitle = (not applied) and WHISPER
 	LFG_LIST_SEARCH_ENTRY_MENU[2].tooltipText = (not applied) and LFG_LIST_MUST_SIGN_UP_TO_WHISPER;
 	LFG_LIST_SEARCH_ENTRY_MENU[3].arg1 = resultID;
-	LFG_LIST_SEARCH_ENTRY_MENU[3].arg2 = searchResultInfo.leaderName;
+	LFG_LIST_SEARCH_ENTRY_MENU[3].arg2 = searchResultInfo.leaderName or "";
 	LFG_LIST_SEARCH_ENTRY_MENU[4].arg1 = resultID;
-	LFG_LIST_SEARCH_ENTRY_MENU[4].arg2 = searchResultInfo.leaderName;
+	LFG_LIST_SEARCH_ENTRY_MENU[4].arg2 = searchResultInfo.leaderName or "";
 	return LFG_LIST_SEARCH_ENTRY_MENU;
 end
 
@@ -4066,7 +4044,7 @@ function LFGListUtil_SetSearchEntryTooltip(tooltip, resultID, autoAcceptOption)
 	tooltip:SetText(searchResultInfo.name, 1, 1, 1, true);
 	tooltip:AddLine(activityInfo.fullName);
 
-	if (searchResultInfo.playstyle > 0) then
+	if (searchResultInfo.playstyle and searchResultInfo.playstyle > 0) then
 		local playstyleString = C_LFGList.GetPlaystyleString(searchResultInfo.playstyle, activityInfo);
 		if(not searchResultInfo.crossFactionListing and allowsCrossFaction) then
 			GameTooltip_AddColoredLine(tooltip, GROUP_FINDER_CROSS_FACTION_LISTING_WITH_PLAYSTLE:format(playstyleString,  FACTION_STRINGS[searchResultInfo.leaderFactionGroup]), GREEN_FONT_COLOR);
@@ -4083,10 +4061,10 @@ function LFGListUtil_SetSearchEntryTooltip(tooltip, resultID, autoAcceptOption)
 		tooltip:AddLine(string.format(LFG_LIST_COMMENT_FORMAT, searchResultInfo.comment), LFG_LIST_COMMENT_FONT_COLOR.r, LFG_LIST_COMMENT_FONT_COLOR.g, LFG_LIST_COMMENT_FONT_COLOR.b, true);
 	end
 	tooltip:AddLine(" ");
-	if ( searchResultInfo.requiredDungeonScore > 0 ) then
+	if ( searchResultInfo.requiredDungeonScore and searchResultInfo.requiredDungeonScore > 0 ) then
 		tooltip:AddLine(GROUP_FINDER_MYTHIC_RATING_REQ_TOOLTIP:format(searchResultInfo.requiredDungeonScore));
 	end
-	if ( searchResultInfo.requiredPvpRating > 0 ) then
+	if ( searchResultInfo.requiredPvpRating and searchResultInfo.requiredPvpRating > 0 ) then
 		tooltip:AddLine(GROUP_FINDER_PVP_RATING_REQ_TOOLTIP:format(searchResultInfo.requiredPvpRating));
 	end
 	if ( searchResultInfo.requiredItemLevel > 0 ) then
@@ -4102,7 +4080,12 @@ function LFGListUtil_SetSearchEntryTooltip(tooltip, resultID, autoAcceptOption)
 	if ( searchResultInfo.voiceChat ~= "" ) then
 		tooltip:AddLine(string.format(LFG_LIST_TOOLTIP_VOICE_CHAT, searchResultInfo.voiceChat), nil, nil, nil, true);
 	end
-	if ( searchResultInfo.requiredItemLevel > 0 or (activityInfo.useHonorLevel and searchResultInfo.requiredHonorLevel > 0) or searchResultInfo.voiceChat ~= "" or  searchResultInfo.requiredDungeonScore > 0 or searchResultInfo.requiredPvpRating > 0 ) then
+	if ( searchResultInfo.requiredItemLevel > 0 
+		or (activityInfo.useHonorLevel and searchResultInfo.requiredHonorLevel > 0) 
+		or searchResultInfo.voiceChat ~= ""
+		or (searchResultInfo.requiredDungeonScore and searchResultInfo.requiredDungeonScore > 0) 
+		or (searchResultInfo.requiredPvpRating and searchResultInfo.requiredPvpRating > 0) )
+	then
 		tooltip:AddLine(" ");
 	end
 
@@ -4121,7 +4104,7 @@ function LFGListUtil_SetSearchEntryTooltip(tooltip, resultID, autoAcceptOption)
 			return (C_ChallengeMode.GetSpecificDungeonOverallScoreRarityColor(score) or HIGHLIGHT_FONT_COLOR):WrapTextInColorCode(text);
 		end
 
-		local overallColor = C_ChallengeMode.GetDungeonScoreRarityColor(searchResultInfo.leaderOverallDungeonScore) or HIGHLIGHT_FONT_COLOR;
+		local overallColor = C_ChallengeMode.GetDungeonScoreRarityColor(searchResultInfo.leaderOverallDungeonScore or 0) or HIGHLIGHT_FONT_COLOR;
 
 		if activityInfo.isMythicPlusActivity and searchResultInfo.leaderOverallDungeonScore then
 			tooltip:AddDoubleLine(leaderNameString, overallColor:WrapTextInColorCode(searchResultInfo.leaderOverallDungeonScore))
