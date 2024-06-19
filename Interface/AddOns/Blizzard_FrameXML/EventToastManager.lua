@@ -89,6 +89,7 @@ local eventToastTemplatesByToastType = {
 	[Enum.EventToastDisplayType.ScenarioClickExpand] = {template = "EventToastScenarioExpandToastTemplate", frameType = "BUTTON", hideAutomatically = false,},
 	[Enum.EventToastDisplayType.WeeklyRewardUnlock] = {template = "EventToastManagerWeeklyRewardToastUnlockTemplate", frameType = "FRAME", hideAutomatically = true,},
 	[Enum.EventToastDisplayType.WeeklyRewardUpgrade] = {template = "EventToastManagerWeeklyRewardToastUpgradeTemplate", frameType = "FRAME", hideAutomatically = true,},
+	[Enum.EventToastDisplayType.FlightpointDiscovered] = {template = "EventToastFlightpointDiscoveredTemplate", frameType = "FRAME", hideAutomatically = true,},
 };
 
 EventToastManagerMixin = { };
@@ -126,6 +127,9 @@ function EventToastManagerMixin:SetAnimStartDelay(delay)
 end
 
 function EventToastManagerMixin:SetupGLineAtlas(useWhiteGLineAtlas)
+end
+
+function EventToastManagerMixin:SetupBlackBGAtlas()
 end
 
 EventToastManagerFrameMixin = CreateFromMixins(EventToastManagerMixin); 
@@ -176,11 +180,23 @@ function EventToastManagerFrameMixin:Reset()
 	self:SetScript("OnUpdate", self.OnUpdate);
 end
 
+function EventToastManagerFrameMixin:EnableBlackBGAnimation(enable)
+	self.blackBGAnimationEnabled = enable;
+end
+
 function EventToastManagerFrameMixin:SetupGLineAtlas(useWhiteGLineAtlas)
 	local atlas = useWhiteGLineAtlas and "levelup-bar-white" or "levelup-bar-gold"
 	self.GLine:SetAtlas(atlas, TextureKitConstants.UseAtlasSize);
+	self.GLine:SetPoint("BOTTOM");
 	self.GLine2:SetAtlas(atlas, TextureKitConstants.UseAtlasSize);
+	self.GLine2:SetPoint("TOP");
 end		
+
+function EventToastManagerFrameMixin:SetupBlackBGAtlas()
+	self.BlackBG:SetAtlas("levelup-shadow-upper", TextureKitConstants.UseAtlasSize);
+	self.BlackBG:SetAlpha(0.6);
+	self.BlackBG:SetPoint("BOTTOM");
+end	
 
 function EventToastManagerFrameMixin:AreAnimationsPaused()
 	return self.animationsPaused; 
@@ -217,7 +233,7 @@ function EventToastManagerFrameMixin:IsCurrentlyToasting()
 end
 
 function EventToastManagerFrameMixin:OnUpdate()
-	local mouseOver = RegionUtil.IsDescendantOfOrSame(GetMouseFocus(), self);
+	local mouseOver = RegionUtil.IsAnyDescendantOfOrSame(GetMouseFoci(), self);
 	if (mouseOver) then 
 		self:PauseAnimations();
 	else
@@ -289,7 +305,7 @@ function EventToastManagerFrameMixin:DisplayToast(firstToast)
 		C_EventToastManager.RemoveCurrentToast(); 
 	end
 
-	local toastInfo = C_EventToastManager.GetNextToastToDisplay(); 
+	local toastInfo = C_EventToastManager.GetNextToastToDisplay();
 	self.currentDisplayingToast = nil;
 	if(toastInfo) then
 		local toastTable = eventToastTemplatesByToastType[toastInfo.displayType];
@@ -300,6 +316,7 @@ function EventToastManagerFrameMixin:DisplayToast(firstToast)
 		local toast = self:GetToastFrame(toastTable);
 		self.currentDisplayingToast = toast;
 		self.shouldAnim = true;
+		self:EnableBlackBGAnimation(true);
 		self:UpdateAnchor();
 		self.hideAutomatically = toastTable.hideAutomatically;
 		toast.hideAutomatically = toastTable.hideAutomatically;
@@ -334,13 +351,15 @@ function EventToastManagerFrameMixin:AnimationsPaused()
 end
 
 function EventToastManagerFrameMixin:PlayAnim()
-	self.BlackBG:SetShown(self.shouldAnim); 
+	self.BlackBG:SetShown(self.shouldAnim);
 	self.GLine:SetShown(self.shouldAnim);
 	self.GLine2:SetShown(self.shouldAnim);
 	if(self.shouldAnim) then 
 		self.GLine.grow:Play();
 		self.GLine2.grow:Play();
-		self.BlackBG.grow:Play();
+		if self.blackBGAnimationEnabled then
+			self.BlackBG.grow:Play();
+		end
 	end
 end
 
@@ -479,6 +498,22 @@ function EventToastScenarioBaseToastMixin:PlayAnim()
 	self:AnimIn();
 end
 
+function EventToastScenarioBaseToastMixin:SetupGLineAtlas(useWhiteGLineAtlas)
+	local atlas = useWhiteGLineAtlas and "levelup-bar-white" or "levelup-bar-gold"
+	local parent = self:GetParent();
+	parent.GLine:SetAtlas("evergreen-scenario-line-bottom", TextureKitConstants.UseAtlasSize);
+	parent.GLine:SetPoint("BOTTOM", 0, -4);
+	parent.GLine2:SetAtlas("evergreen-scenario-line-top", TextureKitConstants.UseAtlasSize);
+	parent.GLine2:SetPoint("TOP", 0, -5);
+end
+
+function EventToastScenarioBaseToastMixin:SetupBlackBGAtlas()
+	local parent = self:GetParent();
+	parent.BlackBG:SetAtlas("evergreen-scenario-black-background");
+	parent.BlackBG:SetHeight(64);
+	parent:EnableBlackBGAnimation(false);
+end
+
 EventToastScenarioToastMixin = { };
 
 function EventToastScenarioToastMixin:Setup(toastInfo)
@@ -495,7 +530,6 @@ function EventToastScenarioToastMixin:Setup(toastInfo)
 	self:Show(); 
 	self:PlayAnim(); 
 end
-
 
 function EventToastScenarioToastMixin:OnAnimFinished()
 	EventToastScenarioBaseToastMixin.OnAnimFinished(self);
@@ -664,6 +698,27 @@ function EventToastWithIconLargeTextMixin:Setup(toastInfo)
 	self.Icon:SetPoint("TOPLEFT", 0, -20);
 	self:Show(); 
 	self:AnimIn(); 
+end
+
+EventToastFlightpointDiscoveredMixin = { };
+function EventToastFlightpointDiscoveredMixin:Setup(toastInfo)
+	EventToastWithIconBaseMixin.Setup(self, toastInfo);
+
+	self:Show(); 
+	self:AnimIn(); 
+end
+
+function EventToastFlightpointDiscoveredMixin:SetupGLineAtlas(useWhiteGLineAtlas)
+	local parent = self:GetParent();
+	local atlas = "UI-World-Quest-golden-line-2x";
+	local glineWidth = self:GetWidth() + 35;
+
+	parent.GLine:SetAtlas(atlas, false);
+	parent.GLine:SetSize(glineWidth, 7);
+	parent.GLine:SetPoint("BOTTOM", 0, -3);
+
+	parent.GLine2:SetAtlas(atlas, false);
+	parent.GLine2:SetSize(glineWidth, 7);
 end
 
 EventToastWithIconWithRarityMixin = { };
@@ -988,7 +1043,17 @@ local defaultAnimOutStartDelay = 1.8;
 local defaultAnimOutDuration = 0.5;
 
 function EventToastAnimationsMixin:BannerPlay()
-	self:GetParent():SetupGLineAtlas(self.useWhiteGlineAtlas);
+	if(self.SetupGLineAtlas) then
+		self:SetupGLineAtlas(self.useWhiteGLineAtlas);
+	else
+		self:GetParent():SetupGLineAtlas(self.useWhiteGlineAtlas);
+	end
+
+	if self.SetupBlackBGAtlas then
+		self:SetupBlackBGAtlas();
+	else
+		self:GetParent():SetupBlackBGAtlas();
+	end
 
 	self:SetAnimInStartDelay(self.animInStartDelay or defaultAnimInStartDelay);
 	self:GetParent():SetAnimStartDelay(self.animInStartDelay or defaultAnimInStartDelay);

@@ -952,7 +952,7 @@ function FramePositionDelegate:UIParentManageFramePositions()
 		end
 	end
 
-	FramePositionDelegate_Override_HandleExtraBars(self);
+	FramePositionDelegate_Override_HandleExtraBars();
 
 	-- If petactionbar is already shown, set its point in addition to changing its y target
 	if (PetActionBarFrame and PetActionBarFrame:IsShown() ) then
@@ -994,9 +994,9 @@ function FramePositionDelegate:UIParentManageFramePositions()
 		anchorY = anchorY - UIWidgetBelowMinimapContainerFrame:GetHeight() - 4;
 	end
 
-	anchorY = FramePositionDelegate_Override_QuestTimerOffsets(self, anchorY);
+	anchorY = FramePositionDelegate_Override_QuestTimerOffsets(anchorY);
 
-	anchorY = FramePositionDelegate_Override_VehicleSeatIndicatorOffsets(self, anchorY);
+	anchorY = FramePositionDelegate_Override_VehicleSeatIndicatorOffsets(anchorY);
 
 	-- Boss frames - need to move below buffs/debuffs if both right action bars are showing
 	local numBossFrames = 0;
@@ -1033,7 +1033,7 @@ function FramePositionDelegate:UIParentManageFramePositions()
 		ArenaPrepFrames:SetPoint("TOPRIGHT", MinimapCluster, "BOTTOMRIGHT", -CONTAINER_OFFSET_X, anchorY);
 	end
 
-	anchorY = FramePositionDelegate_Override_QuestWatchFrameOffsets(self, anchorY, rightActionBars, buffsAnchorY);
+	anchorY = FramePositionDelegate_Override_QuestWatchFrameOffsets(anchorY, rightActionBars, buffsAnchorY);
 
 	-- Update chat dock since the dock could have moved
 	FCF_DockUpdate();
@@ -1349,7 +1349,7 @@ function RestoreUIPanelArea(currentFrame)
 end
 
 function IsOptionFrameOpen()
-	if ( GameMenuFrame:IsShown() or InterfaceOptionsFrame:IsShown() or (KeyBindingFrame and KeyBindingFrame:IsShown()) ) then
+	if ( GameMenuFrame:IsShown() or (KeyBindingFrame and KeyBindingFrame:IsShown()) ) then
 		return 1;
 	else
 		return nil;
