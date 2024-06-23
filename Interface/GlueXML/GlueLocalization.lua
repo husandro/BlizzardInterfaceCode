@@ -5,7 +5,6 @@ end
 function LocalizeFrames()
 	-- Put all locale specific UI adjustments here
 
-	RPEUpgradeMinimizedFrame:SetWidth(310);
-	RPEUpgradeMinimizedFrame.Title:SetWidth(160);
-	RPEUpgradeMinimizedFrame.Title:SetFontObject(GameFontNormalLarge);
+	-- Random name button is for English only
+	CharacterCreateFrame.NameChoiceFrame.RandomNameButton:SetShown(true);
 end
