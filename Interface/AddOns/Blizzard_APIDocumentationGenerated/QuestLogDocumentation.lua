@@ -17,7 +17,6 @@ local QuestLog =
 			Arguments =
 			{
 				{ Name = "questID", Type = "number", Nilable = false },
-				{ Name = "watchType", Type = "QuestWatchType", Nilable = true },
 			},
 
 			Returns =
@@ -411,7 +410,7 @@ local QuestLog =
 
 			Returns =
 			{
-				{ Name = "reputationRewards", Type = "table", InnerType = "QuestReputationRewardInfo", Nilable = false },
+				{ Name = "reputationRewards", Type = "table", InnerType = "QuestRewardReputationInfo", Nilable = false },
 			},
 		},
 		{
@@ -444,6 +443,36 @@ local QuestLog =
 			Returns =
 			{
 				{ Name = "objectives", Type = "table", InnerType = "QuestObjectiveInfo", Nilable = false },
+			},
+		},
+		{
+			Name = "GetQuestRewardCurrencies",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "questID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "questRewardCurrencies", Type = "table", InnerType = "QuestRewardCurrencyInfo", Nilable = false },
+			},
+		},
+		{
+			Name = "GetQuestRewardCurrencyInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "questID", Type = "number", Nilable = false },
+				{ Name = "currencyIndex", Type = "luaIndex", Nilable = false },
+				{ Name = "isChoice", Type = "bool", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "questRewardCurrencyInfo", Type = "QuestRewardCurrencyInfo", Nilable = true },
 			},
 		},
 		{

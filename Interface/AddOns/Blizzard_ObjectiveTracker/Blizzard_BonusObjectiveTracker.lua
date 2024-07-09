@@ -185,13 +185,11 @@ function BonusObjectiveTrackerMixin:ShowRewardsToast(block, questID)
 		tinsert(rewards, t);
 	end
 	-- currencies
-	local numCurrencies = GetNumQuestLogRewardCurrencies(questID);
-	for i = 1, numCurrencies do
-		local name, texture, count = GetQuestLogRewardCurrencyInfo(i, questID);
+	for index, currencyReward in ipairs(C_QuestLog.GetQuestRewardCurrencies(questID)) do
 		local t = { };
-		t.label = name;
-		t.texture = texture;
-		t.count = count;
+		t.label = currencyReward.name;
+		t.texture = currencyReward.texture;
+		t.count = currencyReward.totalRewardAmount;
 		t.font = "GameFontHighlightSmall";
 		tinsert(rewards, t);
 	end
@@ -341,15 +339,15 @@ function BonusObjectiveTrackerMixin:SetUpQuestBlock(block, forceShowCompleted)
 	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID);
 	local isQuestComplete = C_QuestLog.IsComplete(questID);
 
-	block:SetHeader(block.taskName);
-	block:EnableMouse(not block.taskName);
-
 	if QuestUtil.CanCreateQuestGroup(questID) then
 		block:AddRightEdgeFrame(self.findGroupButtonSettings, questID);
 	end
 	if questLogIndex and QuestUtil.QuestShowsItemByIndex(questLogIndex, isQuestComplete) then
 		block:AddRightEdgeFrame(self.questItemButtonSettings, questLogIndex);
 	end
+
+	block:SetHeader(block.taskName);
+	block:EnableMouse(not block.taskName);
 
 	local isWorldQuest = self.showWorldQuests;
 	local isThreatQuest = false;
@@ -526,8 +524,9 @@ function BonusObjectiveTrackerProgressBarMixin:UpdateReward()
 			texture = icon or "Interface\\Icons\\INV_Misc_QuestionMark";
 		end
 		-- currency
-		if not texture and GetNumQuestLogRewardCurrencies(questID) > 0 then
-			_, texture = GetQuestLogRewardCurrencyInfo(1, questID);
+		local questRewardCurrencies = C_QuestInfoSystem.GetQuestRewardCurrencies(questID);
+		if not texture and #questRewardCurrencies > 0 then
+			texture = questRewardCurrencies[1].texture;
 		end
 		-- money?
 		if not texture and GetQuestLogRewardMoney(questID) > 0 then
@@ -645,7 +644,7 @@ function BonusObjectiveBlockMixin:TryShowRewardsTooltip()
 		end
 	end
 
-	if HaveQuestRewardData(questID) and GetQuestLogRewardXP(questID) == 0 and GetNumQuestLogRewardCurrencies(questID) == 0
+	if HaveQuestRewardData(questID) and GetQuestLogRewardXP(questID) == 0 and (not C_QuestInfoSystem.HasQuestRewardCurrencies(questID))
 								and GetNumQuestLogRewards(questID) == 0 and GetQuestLogRewardMoney(questID) == 0 and GetQuestLogRewardArtifactXP(questID) == 0 then
 		GameTooltip:Hide();
 		return;
@@ -683,7 +682,12 @@ end
 ObjectiveTrackerTopBannerMixin = { };
 
 function ObjectiveTrackerTopBannerMixin:OnLoad()
-	self.Anim:SetScript("OnFinished", GenerateClosure(self.OnAnimFinished, self));
+	self.PopAnim:SetScript("OnFinished", GenerateClosure(self.OnPopAnimFinished, self));
+	self.SlideAnim:SetScript("OnFinished", GenerateClosure(self.OnSlideAnimFinished, self));
+end
+
+function ObjectiveTrackerTopBannerMixin:OnHide()
+	TopBannerManager_BannerFinished();
 end
 
 function ObjectiveTrackerTopBannerMixin:GetQuestID()
@@ -717,12 +721,6 @@ function ObjectiveTrackerTopBannerMixin:PlayBanner()
 		self.Subtitle:SetText(BONUS_OBJECTIVE_BANNER);
 		PlaySound(SOUNDKIT.UI_SCENARIO_STAGE_END);
 	end
-	-- offsets for anims
-	local container = ObjectiveTrackerManager:GetContainerForModule(self.module);
-	local height = container:GetHeightToModule(self.module);
-	local xOffset = container:GetLeft() - self:GetRight();
-	local yOffset = container:GetTop() - height - self:GetTop() + (self:GetHeight() / 2);
-	self.Anim.Translation:SetOffset(xOffset, yOffset);
 	-- hide zone text as it's very likely to be up
 	ZoneText_Clear();
 	-- reset alphas for those with start delays
@@ -736,19 +734,35 @@ function ObjectiveTrackerTopBannerMixin:PlayBanner()
 	-- show and play
 	self:Show();
 	self:SetAlpha(1);
-	self.Anim:Restart();
+	self.SlideAnim:Stop();
+	self.PopAnim:Restart();
 	-- timer to put the quest in the tracker
 	C_Timer.After(2.15, GenerateClosure(self.OnFinish, self));
 end
 
 -- called by TopBannerManager
 function ObjectiveTrackerTopBannerMixin:StopBanner()
-	self.Anim:Stop();
+	self.PopAnim:Stop();
+	self.SlideAnim:Stop();
 	self:Hide();
 end
 
-function ObjectiveTrackerTopBannerMixin:OnAnimFinished()
-	TopBannerManager_BannerFinished();
+function ObjectiveTrackerTopBannerMixin:OnPopAnimFinished()
+	-- offsets for anims
+	local container = ObjectiveTrackerManager:GetContainerForModule(self.module);
+	if container:IsRectValid() then
+		local height = container:GetHeightToModule(self.module);
+		local xOffset = container:GetLeft() - self:GetRight();
+		local yOffset = container:GetTop() - height - self:GetTop() + (self:GetHeight() / 2);
+		self.SlideAnim.Translation:SetOffset(xOffset, yOffset);
+	else
+		self.SlideAnim.Translation:SetOffset(0, 0);
+	end
+	self.SlideAnim:Play();
+end
+
+function ObjectiveTrackerTopBannerMixin:OnSlideAnimFinished()
+	self:Hide();
 end
 
 function ObjectiveTrackerTopBannerMixin:OnFinish()

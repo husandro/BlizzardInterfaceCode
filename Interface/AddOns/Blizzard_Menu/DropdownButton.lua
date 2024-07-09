@@ -79,6 +79,7 @@ DropdownButtonMixin:GenerateCallbackEvents(
 function DropdownButtonMixin:OnLoad_Intrinsic()
 	CallbackRegistryMixin.OnLoad(self);
 
+	self:EnableMouseWheel(false);
 	self:RegisterForMouse("LeftButtonDown", "LeftButtonUp");
 
 	self.onMenuClosedCallback = function(menu)
@@ -148,7 +149,7 @@ function DropdownButtonMixin:SetMenuOpen(open)
 end
 
 function DropdownButtonMixin:OnMouseWheel_Intrinsic(delta)
-	if not self.canMouseWheel or self.mouseWheelDisabledThisFrame then
+	if self.mouseWheelDisabledThisFrame then
 		return;
 	end
 
@@ -170,10 +171,6 @@ function DropdownButtonMixin:SetMenuAnchor(anchor)
 	self.menuAnchor = anchor;
 end
 
-function DropdownButtonMixin:SetMouseWheelEnabled(enabled)
-	self.canMouseWheel = enabled;
-end
-
 function DropdownButtonMixin:HandlesGlobalMouseEvent(buttonName, event)
 	return event == "GLOBAL_MOUSE_DOWN" and buttonName == "LeftButton";
 end
@@ -190,7 +187,10 @@ function DropdownButtonMixin:RegisterMenu(menuDescription)
 		self:OnMenuChanged();
 	end);
 
-	menuDescription:SetMinimumWidth(self:GetWidth());
+	local minimumWidth = menuDescription:GetMinimumWidth();
+	if not minimumWidth then
+		menuDescription:SetMinimumWidth(self:GetWidth());
+	end
 
 	if self.menu then
 		--[[

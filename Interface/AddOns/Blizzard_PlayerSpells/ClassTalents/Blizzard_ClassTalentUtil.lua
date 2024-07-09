@@ -1,8 +1,8 @@
 local SpecializationVisuals = {
 	-- DK
-	[250] = { background = "talents-background-deathknight-blood", heroContainerOffset = 15, },
+	[250] = { background = "talents-background-deathknight-blood", heroContainerOffset = -15, },
 	[251] = { background = "talents-background-deathknight-frost", heroContainerOffset = -15, },
-	[252] = { background = "talents-background-deathknight-unholy", heroContainerOffset = 15, },
+	[252] = { background = "talents-background-deathknight-unholy", heroContainerOffset = -15, },
 
 	-- DH
 	[577] = { background = "talents-background-demonhunter-havoc", heroContainerOffset = -15, },
@@ -50,7 +50,7 @@ local SpecializationVisuals = {
 	[261] = { background = "talents-background-rogue-subtlety", heroContainerOffset = -45, },
 
 	-- Shaman
-	[262] = { background = "talents-background-shaman-elemental", heroContainerOffset = -15, },
+	[262] = { background = "talents-background-shaman-elemental", heroContainerOffset = 15, },
 	[263] = { background = "talents-background-shaman-enhancement", heroContainerOffset = 15, },
 	[264] = { background = "talents-background-shaman-restoration", heroContainerOffset = 15, },
 

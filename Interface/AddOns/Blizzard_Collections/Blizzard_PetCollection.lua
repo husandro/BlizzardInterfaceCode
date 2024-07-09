@@ -1175,7 +1175,7 @@ PetJournalLoadoutDragButtonMixin = CreateFromMixins(PetJournalDragButtonMixin);
 function PetJournalLoadoutDragButtonMixin:OnClick(button)
 	local loadout = self:GetParent();
 	if (button == "RightButton" and loadout.petID) then
-		PetJournal_ShowPetDropdown(self, loadout.petID);
+		PetJournal_ShowPetDropdown(self, nil, loadout.petID);
 		return;
 	end
 	if ( IsModifiedClick("CHATLINK") ) then
@@ -1584,10 +1584,12 @@ end
 
 function PetJournalFilterDropdown_SetAllPetTypes(value)
 	C_PetJournal.SetAllPetTypesChecked(value);
+	return MenuResponse.Refresh;
 end 
 
 function PetJournalFilterDropdown_SetAllPetSources(value)
 	C_PetJournal.SetAllPetSourcesChecked(value);
+	return MenuResponse.Refresh;
 end
 
 ---------------------------------------

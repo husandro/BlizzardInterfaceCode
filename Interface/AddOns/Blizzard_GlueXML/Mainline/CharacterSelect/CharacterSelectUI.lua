@@ -11,6 +11,7 @@ function CharacterSelectUIMixin:OnLoad()
 	self.RotationConstant = 0.6;
 	self.ClampedHeightTopPercent = 0.8;
 	self.ClampedHeightBottomPercent = 0.2;
+	self.DoubleClickThreshold = 0.3;
 	self.ListToggle:SetExpandTarget(self.CharacterList);
 
 	local function MapFadeInOnFinished()
@@ -28,6 +29,7 @@ function CharacterSelectUIMixin:OnLoad()
 
 	self.currentMapSceneHoverGUID = nil;
 	self.mouseDownMapSceneHoverGUID = nil;
+	self.doubleClickHoverGUID = nil;
 
     SetCharSelectModelFrame(self.ModelFFX:GetName());
     SetCharSelectMapSceneFrame(self.MapScene:GetName());
@@ -44,9 +46,12 @@ end
 
 function CharacterSelectUIMixin:OnEvent(event, ...)
 	if event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
-		if CharacterSelect.selectedIndex > 0 then
-			self:SetupCharacterOverlayFrames();
-		end
+		-- Defer this until the next frame so that any pending map frame projection changes have taken effect.
+		RunNextFrame(function()
+			if CharacterSelect.selectedIndex > 0 then
+				self:SetupCharacterOverlayFrames();
+			end
+		end);
 	elseif event == "MAP_SCENE_CHARACTER_ON_MOUSE_ENTER" then
 		local guid = ...;
 
@@ -123,7 +128,15 @@ function CharacterSelectUIMixin:OnMouseUp(button)
     end
 
 	if self.mouseDownMapSceneHoverGUID and self.mouseDownMapSceneHoverGUID == self.currentMapSceneHoverGUID then
-		CharacterSelectListUtil.ClickCharacterFrameByGUID(self.mouseDownMapSceneHoverGUID);
+		local isDoubleClick = self.doubleClickHoverGUID and self.doubleClickHoverGUID == self.currentMapSceneHoverGUID;
+		if not self.doubleClickHoverGUID then
+			C_Timer.After(self.DoubleClickThreshold, function()
+				self.doubleClickHoverGUID = nil;
+			end);
+			self.doubleClickHoverGUID = self.currentMapSceneHoverGUID;
+		end
+
+		CharacterSelectListUtil.ClickCharacterFrameByGUID(self.mouseDownMapSceneHoverGUID, isDoubleClick);
 	end
 	self.mouseDownMapSceneHoverGUID = nil;
 end
@@ -228,6 +241,7 @@ function CharacterSelectUIMixin:ShowModelFFX()
 	ResetModel(self.ModelFFX);
 	self:ReleaseCharacterOverlayFrames();
 end
+
 
 function CharacterSelectUIMixin:SetupCharacterOverlayFrames()
 	if self.MapScene:IsShown() and not self.FadeInBackground:IsShown() then
@@ -411,7 +425,17 @@ function CharacterSelectHeaderMixin:OnClick()
 		return;
 	end
 
-	CharacterSelectListUtil.ClickCharacterFrameByGUID(self.basicCharacterInfo.guid);
+	local isDoubleClick = false;
+	CharacterSelectListUtil.ClickCharacterFrameByGUID(self.basicCharacterInfo.guid, isDoubleClick);
+end
+
+function CharacterSelectHeaderMixin:OnDoubleClick()
+	if not self.basicCharacterInfo then
+		return;
+	end
+
+	local isDoubleClick = true;
+	CharacterSelectListUtil.ClickCharacterFrameByGUID(self.basicCharacterInfo.guid, isDoubleClick);
 end
 
 function CharacterSelectHeaderMixin:Initialize(characterID)

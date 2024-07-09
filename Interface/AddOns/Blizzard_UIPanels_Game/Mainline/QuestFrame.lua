@@ -277,11 +277,13 @@ function QuestFrameProgressItems_Update()
 			requiredItem.type = "required";
 			requiredItem.objectType = "currency";
 			requiredItem:SetID(i);
-			local name, texture, numItems = GetQuestCurrencyInfo(requiredItem.type, i);
-			SetItemButtonCount(requiredItem, numItems);
-			SetItemButtonTexture(requiredItem, texture);
-			requiredItem:Show();
-			_G[questItemName..buttonIndex.."Name"]:SetText(name);
+			local requiredCurrencyInfo = C_QuestOffer.GetQuestRequiredCurrencyInfo(i);
+			if requiredCurrencyInfo then
+				SetItemButtonCount(requiredItem, requiredCurrencyInfo.requiredAmount);
+				SetItemButtonTexture(requiredItem, requiredCurrencyInfo.texture);
+				requiredItem:Show();
+				_G[questItemName..buttonIndex.."Name"]:SetText(requiredCurrencyInfo.name);
+			end
 			buttonIndex = buttonIndex+1;
 		end
 
@@ -369,8 +371,8 @@ function QuestFrameGreetingPanel_OnShow()
 		lastTitleButton = nil;
 		for i=(numActiveQuests + 1), (numActiveQuests + numAvailableQuests) do
 			local questTitleButton = QuestFrameGreetingPanel.titleButtonPool:Acquire();
-			local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i - numActiveQuests);
-			QuestUtil.ApplyQuestIconOfferToTextureForQuestID(questTitleButton.Icon, questID, isLegendary, frequency, isRepeatable);
+			local isTrivial, frequency, isRepeatable, isLegendary, questID, isImportant = GetAvailableQuestInfo(i - numActiveQuests);
+			QuestUtil.ApplyQuestIconOfferToTextureForQuestID(questTitleButton.Icon, questID, isLegendary, frequency, isRepeatable, isImportant);
 			
 			local title = GetAvailableTitle(i - numActiveQuests);
 			if ( isTrivial ) then
