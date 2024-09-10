@@ -926,9 +926,7 @@ do
 				button.HighlightBGTex:SetAlpha(0);
 	
 				button:SetScript("OnClick", function(button, buttonName)
-					if CanSelect(choiceData) then
-						description:Pick(MenuInputContext.MouseButton, buttonName);
-					end 
+					description:Pick(MenuInputContext.MouseButton, buttonName);
 				end);
 				
 				local selected = IsSelected(choiceData);
@@ -1106,8 +1104,17 @@ function CharCustomizeDropdownElementDetailsMixin:UpdateText(choiceData, isSelec
 		self.SelectionName:Show();
 		self.SelectionName:SetWidth(0);
 		self.SelectionName:SetText(choiceData.name);
-		self.SelectionNumber:SetWidth(25);
-		self.SelectionNumberBG:SetWidth(25);
+
+		-- Truncates selected customization text
+		local margins = 2;
+		local selectionNumberWidth = 25;
+		local maxWidth = self:GetParent():GetWidth() - margins - (not hideNumber and selectionNumberWidth or 0);
+		if self.SelectionName:GetWidth() > maxWidth then
+			self.SelectionName:SetWidth(maxWidth);
+		end
+
+		self.SelectionNumber:SetWidth(selectionNumberWidth);
+		self.SelectionNumberBG:SetWidth(selectionNumberWidth);
 	else
 		self.SelectionName:Hide();
 		self.SelectionNumber:SetWidth(0);
@@ -1194,7 +1201,7 @@ function CharCustomizeDropdownElementDetailsMixin:Init(choiceData, index, isSele
 	self:UpdateText(choiceData, isSelected, hasAFailedReq, hideNumber, color1);
 
 	if clampNameSize then
-	local maxNameWidth = 126;
+		local maxNameWidth = 126;
 		if self.SelectionName:GetWidth() > maxNameWidth then
 			self.SelectionName:SetWidth(maxNameWidth);
 		end
@@ -1675,7 +1682,8 @@ function CharCustomizeMixin:UpdateOptionButtons(forceReset)
 		end
 	end
 
-	if C_GameModeManager.IsFeatureEnabled(Enum.GameModeFeatureSetting.RaceAlteredFormsEnabled) then
+	local raceAlteredFormsDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.RaceAlteredFormsDisabled);
+	if not raceAlteredFormsDisabled then
 		self:UpdateAlteredFormButtons();
 	end
 

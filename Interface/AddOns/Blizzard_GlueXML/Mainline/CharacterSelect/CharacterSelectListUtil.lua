@@ -121,7 +121,7 @@ function CharacterSelectListUtil.BuildCharIndexToIDMapping(listSize)
 end
 
 function CharacterSelectListUtil.CheckBuildCharIndexToIDMapping()
-	if not s_characterReorderTranslation or #s_characterReorderTranslation == 0 then
+	if CharacterSelect.undeleteChanged or not s_characterReorderTranslation or #s_characterReorderTranslation == 0 then
 		CharacterSelectListUtil.BuildCharIndexToIDMapping();
 	end
 end
@@ -516,7 +516,7 @@ end
 
 function CharacterSelectListUtil.UpdateCharacterHighlight(guid, isHighlight)
 	CharacterSelectListUtil.ForEachCharacterDo(function(frame)
-		if frame.characterInfo.guid == guid then
+		if frame.characterInfo and frame.characterInfo.guid == guid then
 			frame:UpdateHighlightUI(isHighlight);
 		end
 	end);

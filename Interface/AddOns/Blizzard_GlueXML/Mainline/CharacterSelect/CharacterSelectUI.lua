@@ -12,6 +12,7 @@ function CharacterSelectUIMixin:OnLoad()
 	self.ClampedHeightTopPercent = 0.8;
 	self.ClampedHeightBottomPercent = 0.2;
 	self.DoubleClickThreshold = 0.3;
+	self.TooltipTimerDuration = 0.5;
 	self.ListToggle:SetExpandTarget(self.CharacterList);
 
 	local function MapFadeInOnFinished()
@@ -60,7 +61,9 @@ function CharacterSelectUIMixin:OnEvent(event, ...)
 		-- Trigger any updates on the character model UI
 		for headerFrame in self.CharacterHeaderFramePool:EnumerateActive() do
 			if headerFrame.basicCharacterInfo and headerFrame.basicCharacterInfo.guid == guid then
-				headerFrame:SetTooltipAndShow();
+				self.tooltipTimer = C_Timer.NewTimer(self.TooltipTimerDuration, function()
+					headerFrame:SetTooltipAndShow();
+				end);
 				break;
 			end
 		end
@@ -73,6 +76,10 @@ function CharacterSelectUIMixin:OnEvent(event, ...)
 
 		self.currentMapSceneHoverGUID = nil;
 
+		if self.tooltipTimer then
+			self.tooltipTimer:Cancel();
+			self.tooltipTimer = nil;
+		end
 		GlueTooltip:Hide();
 
 		-- Trigger any updates on the character list entry, if visible.
@@ -400,7 +407,9 @@ function CharacterSelectHeaderMixin:OnEnter()
 		return;
 	end
 
-	self:SetTooltipAndShow();
+	self.tooltipTimer = C_Timer.NewTimer(CharacterSelectUI.TooltipTimerDuration, function()
+		self:SetTooltipAndShow();
+	end);
 
 	-- Trigger any updates on the character list entry, if visible.
 	local isHighlight = true;
@@ -415,6 +424,10 @@ function CharacterSelectHeaderMixin:OnLeave()
 		return;
 	end
 
+	if self.tooltipTimer then
+		self.tooltipTimer:Cancel();
+		self.tooltipTimer = nil;
+	end
 	GlueTooltip:Hide();
 
 	-- Trigger any updates on the character list entry, if visible.
@@ -474,4 +487,61 @@ function CharacterSelectHeaderMixin:SetTooltipAndShow()
 	GlueTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", 5, 0);
 	CharacterSelectUtil.SetTooltipForCharacterInfo(self.basicCharacterInfo, nil);
 	GlueTooltip:Show();
+end
+
+
+CharacterDeletionDialogMixin = {}
+
+function CharacterDeletionDialogMixin:OnLoad()
+	self.Background.Button1:SetScript("OnClick", function()
+		self:DeleteCharacter();
+	end);
+
+	self.Background.Button2:SetScript("OnClick", function()
+		self:Hide();
+		PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT);
+	end);
+
+	self.EditBox:SetScript("OnTextChanged", function(editBox)
+		self.Background.Button1:SetEnabled(ConfirmationEditBoxMatches(editBox, DELETE_CONFIRM_STRING));
+	end);
+
+	self.EditBox:SetScript("OnEnterPressed", function()
+		if self.Background.Button1:IsEnabled() then
+			self:DeleteCharacter();
+		end
+	end);
+
+	self.EditBox:SetScript("OnEscapePressed", function()
+		self:Hide();
+	end);
+end
+
+function CharacterDeletionDialogMixin:OnShow()
+	self:Raise();
+
+	self.characterGuid = GetCharacterGUID(CharacterSelectListUtil.GetCharIDFromIndex(CharacterSelect.selectedIndex));
+	if not self.characterGuid then
+		return;
+	end
+
+	local basicInfo = GetBasicCharacterInfo(self.characterGuid);
+    self.Background.Text1:SetFormattedText(CONFIRM_CHAR_DELETE, basicInfo.name, basicInfo.experienceLevel, basicInfo.className);
+    self.Background:SetHeight(16 + self.Background.Text1:GetHeight() + self.Background.Text2:GetHeight() + 23 + self.EditBox:GetHeight() + 8 + self.Background.Button1:GetHeight() + 16);
+    self.Background.Button1:Disable();
+end
+
+function CharacterDeletionDialogMixin:OnHide()
+	self.EditBox:SetText("");
+end
+
+function CharacterDeletionDialogMixin:DeleteCharacter()
+	if CharacterSelect_IsRetrievingCharacterList() or CharacterSelectUtil.IsAccountLocked() or not self.characterGuid then
+		return;
+	end
+
+	DeleteCharacter(self.characterGuid);
+	self:Hide();
+	PlaySound(SOUNDKIT.GS_TITLE_OPTION_OK);
+	GlueDialog_Show("CHAR_DELETE_IN_PROGRESS");
 end

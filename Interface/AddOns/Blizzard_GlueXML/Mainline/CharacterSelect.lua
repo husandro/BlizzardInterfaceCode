@@ -181,6 +181,7 @@ function CharacterSelectFrameMixin:OnShow()
             GameRoomBillingFrameText:SetText(billingText);
             GameRoomBillingFrame:SetHeight(GameRoomBillingFrameText:GetHeight() + 26);
             GameRoomBillingFrame:Show();
+			CharacterSelect_UpdateGameRoomBillingFrameAnchors();
         end
     end
 
@@ -828,10 +829,10 @@ function CharacterSelect_SelectCharacter(index, noCreate)
         CharSelectEnterWorldButton:SetText(text);
 
 		if characterInfo.boostInProgress == false and (not CharacterServicesFlow_IsShowing() or not CharacterServicesMaster.flow:UsesSelector()) then
-			if IsRPEBoostEligible(selectedCharacterID) and characterInfo.realmName == CharacterSelectUtil.GetFormattedCurrentRealmName() then
+			if IsRPEBoostEligible(selectedCharacterID) and CharacterSelectUtil.IsSameRealmAsCurrent(characterInfo.realmAddress) then
 				BeginCharacterServicesFlow(RPEUpgradeFlow, {});
-				if IsVeteranTrialAccount() then
-					CharSelectServicesFlow_Minimize() --if they need to resubscribe, get the RPE flow out of the way.
+				if CharSelectServicesFlowFrame:IsShown() and CharacterServicesMaster.flow == RPEUpgradeFlow and IsVeteranTrialAccount() then
+					CharSelectServicesFlow_Minimize(); --if they need to resubscribe, get the RPE flow out of the way.
 				end
 			else
 				EndCharacterServicesFlow(false);
@@ -842,18 +843,6 @@ function CharacterSelect_SelectCharacter(index, noCreate)
 			end);
 		end
     end
-end
-
-function CharacterDeleteDialog_OnShow()
-	local characterGuid = GetCharacterGUID(CharacterSelectListUtil.GetCharIDFromIndex(CharacterSelect.selectedIndex));
-	if not characterGuid then
-		return;
-	end
-
-	local basicInfo = GetBasicCharacterInfo(characterGuid);
-    CharacterDeleteText1:SetFormattedText(CONFIRM_CHAR_DELETE, basicInfo.name, basicInfo.experienceLevel, basicInfo.className);
-    CharacterDeleteBackground:SetHeight(16 + CharacterDeleteText1:GetHeight() + CharacterDeleteText2:GetHeight() + 23 + CharacterDeleteEditBox:GetHeight() + 8 + CharacterDeleteButton1:GetHeight() + 16);
-    CharacterDeleteButton1:Disable();
 end
 
 local function EnterWorldHelper()
@@ -1022,7 +1011,13 @@ function CharacterSelectScrollUp_OnClick()
 end
 
 local function GetLeftSideAlertBottomOffset()
-	return RPEUpgradeMinimizedFrame:IsShown() and RPEUpgradeMinimizedFrame.Icon:GetTop() or CharacterSelectBackButton:GetTop();
+	if GameRoomBillingFrame:IsShown() then
+		return GameRoomBillingFrame:GetTop();
+	elseif RPEUpgradeMinimizedFrame:IsShown() then
+		return RPEUpgradeMinimizedFrame.Icon:GetTop();
+	else
+		return CharacterSelectBackButton:GetTop();
+	end
 end
 
 CharacterSelectServerAlertFrameMixin = {};
@@ -1284,6 +1279,7 @@ function AccountUpgradePanel_UpdateExpandState()
         CharSelectAccountUpgradeButton.expandCollapseButton:Show();
     end
 	AccountUpgradePanel_Update(shouldBeExpanded);
+	CharacterSelect_UpdateGameRoomBillingFrameAnchors();
 	CharacterSelectServerAlertFrame:UpdateHeight();
 end
 
@@ -1312,6 +1308,7 @@ function CharacterTemplatesFrame_OnLoad(self)
 
 	self.CreateTemplateButton:SetScript("OnClick", function()
 		PlaySound(SOUNDKIT.GS_CHARACTER_SELECTION_CREATE_NEW);
+		CharacterSelectListUtil.SaveCharacterOrder();
 		C_CharacterCreation.SetCharacterTemplate(self.characterIndex);
 		GlueParent_SetScreen("charcreate");
 	end);
@@ -1480,17 +1477,6 @@ function CharacterSelect_UpdateButtonState()
 	CharSelectEnterWorldButton:SetDisabledTooltip(disabledTooltip);
 end
 
-function CharacterSelect_DeleteCharacter(charID)
-	if CharacterSelect_IsRetrievingCharacterList() or CharacterSelectUtil.IsAccountLocked() then
-        return;
-    end
-
-	DeleteCharacter(CharacterSelectListUtil.GetCharIDFromIndex(CharacterSelect.selectedIndex));
-    CharacterDeleteDialog:Hide();
-    PlaySound(SOUNDKIT.GS_TITLE_OPTION_OK);
-    GlueDialog_Show("CHAR_DELETE_IN_PROGRESS");
-end
-
 local KIOSK_AUTO_REALM_ADDRESS = nil
 function SetKioskAutoRealmAddress(realmAddr)
 	KIOSK_AUTO_REALM_ADDRESS = realmAddr;
@@ -1511,24 +1497,28 @@ function KioskMode_CheckAutoRealm()
 end
 
 function CharacterSelect_ConditionallyLoadAccountSaveUI()
-    if (C_AccountServices.IsAccountSaveEnabled()) then
-        if (not ACCOUNT_SAVE_IS_LOADED) then
+    if C_AccountServices.IsAccountSaveEnabled() then
+        if not ACCOUNT_SAVE_IS_LOADED then
             ACCOUNT_SAVE_IS_LOADED = C_AddOns.LoadAddOn("Blizzard_AccountSaveUI");
         end
-        if (AccountSaveFrame) then
-            AccountSaveFrame:Show();
 
-            if (GameRoomBillingFrame:IsShown()) then
-				GameRoomBillingFrame:SetPoint("TOPLEFT", CharacterSelectBackButton, "TOPRIGHT");
-            end
+        if AccountSaveFrame then
+            AccountSaveFrame:Show();
         end
     elseif AccountSaveFrame then
         AccountSaveFrame:Hide();
-
-        if (GameRoomBillingFrame:IsShown()) then
-            GameRoomBillingFrame:SetPoint("TOP", CharacterSelectServerAlertFrame, "BOTTOM");
-        end
     end
+end
+
+function CharacterSelect_UpdateGameRoomBillingFrameAnchors()
+	if GameRoomBillingFrame:IsShown() then
+		GameRoomBillingFrame:ClearAllPoints();
+		if RPEUpgradeMinimizedFrame:IsShown() then
+			GameRoomBillingFrame:SetPoint("BOTTOMLEFT", RPEUpgradeMinimizedFrame, "TOPLEFT");
+		else
+			GameRoomBillingFrame:SetPoint("BOTTOMLEFT", CharacterSelectBackButton, "TOPLEFT", -8, 0);
+		end
+	end
 end
 
 local KIOSK_MODE_WAITING_ON_TRIAL = false;
@@ -1644,14 +1634,18 @@ end
 function CharSelectServicesFlow_Minimize()
 	local parent = CharSelectServicesFlowFrame;
 	parent.IsMinimized = true;
-	parent.MinimizedFrame:Show();
+	if parent.MinimizedFrame then
+		parent.MinimizedFrame:Show();
+	end
 	parent:Hide();
 end
 
 function CharSelectServicesFlow_Maximize()
 	local parent = CharSelectServicesFlowFrame;
 	parent.IsMinimized = false;
-	parent.MinimizedFrame:Hide();
+	if parent.MinimizedFrame then
+		parent.MinimizedFrame:Hide();
+	end
 	BeginCharacterServicesFlow(RPEUpgradeFlow, {});
 end
 

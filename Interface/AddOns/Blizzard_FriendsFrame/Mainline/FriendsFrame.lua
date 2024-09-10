@@ -254,7 +254,8 @@ function FriendsFrame_OnLoad(self)
 	self.selectedFriend = 1;
 
 	self:SetParent(GetAppropriateTopLevelParent());
-	if IsOnGlueScreen() or not C_GameModeManager.IsFeatureEnabled(Enum.GameModeFeatureSetting.InGameFriendsList) then
+	local inGameFriendsListDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.IngameFriendsListDisabled);
+	if IsOnGlueScreen() or inGameFriendsListDisabled then
 		self:ClearAllPoints();
 		self:SetPoint("TOPLEFT", 50, -50);
 
@@ -367,6 +368,21 @@ function FriendsFrame_OnShow(self)
 	EventRegistry:RegisterCallback("GameEnvironment.Selected", function()
 		self:Hide();
 	end, self);
+
+	-- Raid tab is unavailable while in raid story content.
+	local inStoryRaid = DifficultyUtil.InStoryRaid();
+	local enableRaidTab = not inStoryRaid;
+	PanelTemplates_SetTabEnabled(self, 3, enableRaidTab);
+
+	if enableRaidTab then
+		FriendsFrameTab3:SetScript("OnEnter", nil);
+	else
+		FriendsFrameTab3:SetScript("OnEnter", function()
+			GameTooltip:SetOwner(FriendsFrameTab3, "ANCHOR_RIGHT", 0, 0);
+			GameTooltip:SetText(RED_FONT_COLOR:WrapTextInColorCode(DIFFICULTY_LOCKED_REASON_STORY_RAID));
+			GameTooltip:Show();	
+		end);
+	end
 end
 
 function FriendsFrame_Update()
@@ -539,7 +555,8 @@ end
 
 function FriendsTabHeaderMixin:SetRAFSystemEnabled(rafEnabled)
 	if rafEnabled then
-		rafEnabled = not IsOnGlueScreen() and C_GameModeManager.IsFeatureEnabled(Enum.GameModeFeatureSetting.InGameFriendsList);
+		local inGameFriendsListDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.IngameFriendsListDisabled);
+		rafEnabled = not IsOnGlueScreen() and (not inGameFriendsListDisabled);
 	end
 
 	FRIEND_HEADER_TAB_COUNT = rafEnabled and 3 or 2;
@@ -569,7 +586,7 @@ FriendsFrameTabMixin = {};
 
 function FriendsFrameTabMixin:OnClick()
 	PanelTemplates_Tab_OnClick(self, FriendsFrame);
-	FriendsFrame_OnShow(self);
+	FriendsFrame_OnShow(FriendsFrame);
 end
 
 function FriendsListFrame_OnShow(self)
@@ -1279,7 +1296,8 @@ function ToggleFriendsFrame(tab)
 		return;
 	end
 
-	if not IsOnGlueScreen() and not C_GameModeManager.IsFeatureEnabled(Enum.GameModeFeatureSetting.InGameFriendsList) then
+	local inGameFriendsListDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.IngameFriendsListDisabled);
+	if not IsOnGlueScreen() and inGameFriendsListDisabled then
 		return;
 	end
 
@@ -1296,7 +1314,7 @@ function ToggleFriendsFrame(tab)
 		end
 		PanelTemplates_SetTab(FriendsFrame, tab);
 		if ( FriendsFrame:IsShown() ) then
-			FriendsFrame_OnShow(self);
+			FriendsFrame_OnShow(FriendsFrame);
 		else
 			ShowUIPanel(FriendsFrame);
 		end
@@ -1334,7 +1352,7 @@ function OpenFriendsFrame(tab)
 	else
 		PanelTemplates_SetTab(FriendsFrame, tab);
 		if ( FriendsFrame:IsShown() ) then
-			FriendsFrame_OnShow(self);
+			FriendsFrame_OnShow(FriendsFrame);
 		else
 			ShowUIPanel(FriendsFrame);
 		end
@@ -1349,7 +1367,7 @@ end
 function ShowWhoPanel()
 	PanelTemplates_SetTab(FriendsFrame, 2);
 	if ( FriendsFrame:IsShown() ) then
-		FriendsFrame_OnShow(self);
+		FriendsFrame_OnShow(FriendsFrame);
 	else
 		ShowUIPanel(FriendsFrame);
 	end
@@ -2469,36 +2487,50 @@ function FriendsFrame_SetupTravelPassDropdown(friendIndex, attachedTo)
 
 		rootDescription:CreateTitle(TRAVEL_PASS_INVITE);
 
-		local numGameAccounts = BNGetNumFriendGameAccounts(friendIndex);
+		local numGameAccounts = C_BattleNet.GetFriendNumGameAccounts(friendIndex);
 		for i = 1, numGameAccounts do
-			local text;
+			local text = "";
 			local restriction = INVITE_RESTRICTION_NONE;
-			local hasFocus, characterName, client, realmName, realmID, faction, race, class, _, _, level, _, _, _, _, bnetIDGameAccount, _, _, _, wowProjectID = BNGetFriendGameAccountInfo(friendIndex, i);
-			if ( client == BNET_CLIENT_WOW ) then
-				if ( faction ~= playerFactionGroup ) then
-					restriction = INVITE_RESTRICTION_FACTION;
-				elseif(wowProjectID ~= WOW_PROJECT_ID) then
+			local gameAccountInfo = C_BattleNet.GetFriendGameAccountInfo(friendIndex, i);
+
+			if gameAccountInfo.clientProgram == BNET_CLIENT_WOW then
+				if (not C_PartyInfo.CanFormCrossFactionParties() or C_QuestSession.Exists()) and gameAccountInfo.factionName ~= playerFactionGroup then
+					if C_QuestSession.Exists() then
+						restriction = INVITE_RESTRICTION_QUEST_SESSION;
+					elseif not C_PartyInfo.CanFormCrossFactionParties() then
+						restriction = INVITE_RESTRICTION_FACTION;
+					end
+				elseif gameAccountInfo.wowProjectID ~= WOW_PROJECT_ID then
 					restriction = INVITE_RESTRICTION_WOW_PROJECT_ID;
-				elseif ( realmID == 0 ) then
+				elseif gameAccountInfo.realmID == 0 then
 					restriction = INVITE_RESTRICTION_INFO;
-				elseif ( realmID ~= playerRealmID ) then
-					-- The Classics don't allow grouping across realms
+				elseif (gameAccountInfo.wowProjectID == WOW_PROJECT_CLASSIC) and (gameAccountInfo.realmID ~= playerRealmID) then
 					restriction = INVITE_RESTRICTION_REALM;
 				end
-				if ( restriction == INVITE_RESTRICTION_NONE ) then
-					text = string.format(FRIENDS_TOOLTIP_WOW_TOON_TEMPLATE, characterName, level, race, class);
+				if restriction == INVITE_RESTRICTION_NONE then
+					text = string.format(FRIENDS_TOOLTIP_WOW_TOON_TEMPLATE, gameAccountInfo.characterName, gameAccountInfo.characterLevel, gameAccountInfo.raceName or UNKNOWN, gameAccountInfo.className or UNKNOWN);
 				else
-					text = string.format(FRIENDS_TOOLTIP_WOW_TOON_TEMPLATE, characterName..CANNOT_COOPERATE_LABEL, level, race, class);
+					text = string.format(FRIENDS_TOOLTIP_WOW_TOON_TEMPLATE, gameAccountInfo.characterName..CANNOT_COOPERATE_LABEL, gameAccountInfo.characterLevel, gameAccountInfo.raceName or UNKNOWN, gameAccountInfo.className or UNKNOWN);
 				end
 			else
 				restriction = INVITE_RESTRICTION_CLIENT;
-				text = BNet_GetClientEmbeddedAtlas(client, 18)..characterName;
+				if C_Texture.IsTitleIconTextureReady(gameAccountInfo.clientProgram, Enum.TitleIconVersion.Small) then
+					C_Texture.GetTitleIconTexture(gameAccountInfo.clientProgram, Enum.TitleIconVersion.Small, function(success, texture)
+						if success then
+							text = BNet_GetClientEmbeddedTexture(texture, 32, 32, 18);
+						end
+					end);
+				end
 			end
 
 			if ( restriction == INVITE_RESTRICTION_NONE ) then
 				rootDescription:CreateButton(text, function()
-					local guid = select(20, BNGetGameAccountInfo(bnetIDGameAccount));
-					FriendsFrame_InviteOrRequestToJoin(guid, bnetIDGameAccount);
+					local gameAccountID = gameAccountInfo.gameAccountID;
+					local gameAccountInfo = C_BattleNet.GetGameAccountInfoByID(gameAccountID);
+					local playerGuid = gameAccountInfo.playerGuid;
+					if playerGuid then
+						FriendsFrame_InviteOrRequestToJoin(playerGuid, gameAccountID);
+					end
 				end);
 			else
 				local button = rootDescription:CreateButton(text);

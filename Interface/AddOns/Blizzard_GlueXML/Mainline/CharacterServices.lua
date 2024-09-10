@@ -288,7 +288,17 @@ function CharacterSelectBlockBase:Initialize(results)
 			end);
 
 			if frame then
-				clearButtonScripts(frame);
+				local frameElementData = frame:GetElementData();
+				if frameElementData.isGroup then
+					for _, character in ipairs(frame.groupButtons) do
+						if character:GetCharacterID() == self.charid then
+							clearButtonScripts(character);
+							break;
+						end
+					end
+				else
+					clearButtonScripts(frame);
+				end
 			end
 
 			CharacterServicesMaster_Update();
@@ -325,6 +335,9 @@ function CharacterSelectBlockBase:Initialize(results)
 end
 
 function CharacterSelectBlockBase:ShouldShowPopup()
+	-- Heritage armor restriction has been removed.
+	-- Re-enable this if needed
+	--[[
 	local characterInfo = CharacterSelectUtil.GetCharacterInfoTable(self.charid);
 	if characterInfo then
 		local raceData = C_CharacterCreation.GetRaceDataByID(C_CharacterCreation.GetRaceIDFromName(characterInfo.raceFilename));
@@ -332,6 +345,7 @@ function CharacterSelectBlockBase:ShouldShowPopup()
 		self.seenPopup = true;
 		return characterInfo.isTrialBoost == false and raceData.isAlliedRace and not raceData.hasHeritageArmor and not seenPopupBefore;
 	end
+	--]]
 	return false;
 end
 
@@ -873,10 +887,9 @@ function DoesClientThinkTheCharacterIsEligibleForCharacterUpgrade(characterID)
 	local errors = {};
 
 	if characterInfo then
-		local currentRealm = CharacterSelectUtil.GetFormattedCurrentRealmName();
-		local characterRealm = characterInfo.realmName;
-		CheckAddVASErrorString(errors, BLIZZARD_STORE_VAS_ERROR_CHARACTER_ON_DIFFERENT_REALM_1, currentRealm == characterRealm);
-		CheckAddVASErrorString(errors, BLIZZARD_STORE_VAS_ERROR_CHARACTER_ON_DIFFERENT_REALM_2, currentRealm == characterRealm);
+		local isSameRealm = CharacterSelectUtil.IsSameRealmAsCurrent(characterInfo.realmAddress);
+		CheckAddVASErrorString(errors, BLIZZARD_STORE_VAS_ERROR_CHARACTER_ON_DIFFERENT_REALM_1, isSameRealm);
+		CheckAddVASErrorString(errors, BLIZZARD_STORE_VAS_ERROR_CHARACTER_ON_DIFFERENT_REALM_2, isSameRealm);
 
 		-- CanBoostCharacter could be broken down into individual VAS error checks to match other flows.  At the moment they just return false with no associated error.
 		local canTransfer = #errors == 0 and CanBoostCharacter(characterInfo.experienceLevel, characterInfo.boostInProgress, characterInfo.isTrialBoost, characterInfo.isRevokedCharacterUpgrade, characterInfo.vasServiceInProgress, characterInfo.isExpansionTrialCharacter, characterInfo.raceFilename, characterInfo.hasWowToken, characterInfo.guid);
@@ -1430,5 +1443,5 @@ function RPEUpgradeMinimizedFrameMixin:OnLeave()
 end
 
 function RPEUpgradeMinimizedFrameMixin:OnClick()
-	CharSelectServicesFlow_Maximize()
+	CharSelectServicesFlow_Maximize();
 end

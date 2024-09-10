@@ -65,13 +65,13 @@ function BonusObjectiveDataProviderMixin:OnEvent(event, ...)
 	self:RefreshAllData();
 end
 
-local sortTypeToPinTemplate = {
-	[QuestSortType.Threat] = "ThreatObjectivePinTemplate",
-	[QuestSortType.BonusObjective] = "BonusObjectivePinTemplate",
+local questClassificationToPinTemplate = {
+	[Enum.QuestClassification.Threat] = "ThreatObjectivePinTemplate",
+	[Enum.QuestClassification.BonusObjective] = "BonusObjectivePinTemplate",
 };
 
 function BonusObjectiveDataProviderMixin:GetPinTemplateFromTask(taskInfo)
-	return sortTypeToPinTemplate[QuestUtils_GetTaskSortType(taskInfo)];
+	return questClassificationToPinTemplate[C_QuestInfoSystem.GetQuestClassification(taskInfo.questId)];
 end
 
 function BonusObjectiveDataProviderMixin:RefreshAllData(fromOnShow)
@@ -133,7 +133,7 @@ function BonusObjectivePinMixin:OnAcquired(taskInfo)
 	self:SetStyle(self:GetPOIButtonStyle());
 	self:UpdateButtonStyle();
 
-	MapPinHighlight_CheckHighlightPin(self:GetHighlightType(), self, self.Texture);
+	MapPinHighlight_CheckHighlightPin(self:GetHighlightType(), self, self.NormalTexture);
 
 	if not HaveQuestRewardData(self.questID) then
 		C_TaskQuest.RequestPreloadRewardData(self.questID);

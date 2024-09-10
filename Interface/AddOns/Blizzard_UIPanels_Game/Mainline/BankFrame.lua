@@ -357,7 +357,13 @@ function BankFrame_OnEvent (self, event, ...)
 		end
 	elseif ( event == "PLAYERREAGENTBANKSLOTS_CHANGED" ) then
 		local slot = ...;
-		BankFrameItemButton_Update(ReagentBankFrame["Item"..(slot)]);
+		-- When the Bank frame has been opened and the player hasn't opened the Reagent Bank frame, 
+		-- an update for a Reagent Bank slot can be signaled. However, the Reagent Bank frame doesn't
+		-- create the slots until it is shown.
+		local button = ReagentBankFrame["Item"..(slot)];
+		if (button) then
+			BankFrameItemButton_Update(button);
+		end
 	elseif ( event == "PLAYER_MONEY" or event == "PLAYERBANKBAGSLOTS_CHANGED" ) then
 		UpdateBagSlotStatus();
 	elseif ( event == "INVENTORY_SEARCH_UPDATE" ) then
@@ -931,15 +937,32 @@ function BankPanelItemButtonMixin:OnLeave()
 	self:SetScript("OnUpdate", nil);
 end
 
+
+function BankUtil_IsAccountBankDepositRefundable(itemLocation)
+	if not itemLocation or not itemLocation:IsValid() then
+		return false;
+	end
+
+	return (BankFrame:GetActiveBankType() == Enum.BankType.Account) and C_Item.CanBeRefunded(itemLocation);
+end
+
+function BankPanelItemButtonMixin:HandleItemPickup()
+	local cursorItemLocation = C_Cursor.GetCursorItem();
+	if cursorItemLocation and BankUtil_IsAccountBankDepositRefundable(cursorItemLocation) then
+		StaticPopup_Show("ACCOUNT_BANK_DEPOSIT_NO_REFUND_CONFIRM", nil, nil, { itemToDeposit = Item:CreateFromItemGUID(C_Item.GetItemGUID(cursorItemLocation)), targetItemLocation = self.itemLocation });
+	else
+		C_Container.PickupContainerItem(self:GetBankTabID(), self:GetContainerSlotID());
+	end
+end
+
 function BankPanelItemButtonMixin:OnClick(button)
 	if IsModifiedClick() then
 		self:OnModifiedClick(button);
 		return;
 	end
 
-	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION);
 	if ( button == "LeftButton" ) then
-		C_Container.PickupContainerItem(self:GetBankTabID(), self:GetContainerSlotID());
+		self:HandleItemPickup();
 	else
 		C_Container.UseContainerItem(self:GetBankTabID(), self:GetContainerSlotID());
 	end
@@ -966,7 +989,7 @@ function BankPanelItemButtonMixin:OnDragStart()
 end
 
 function BankPanelItemButtonMixin:OnReceiveDrag()
-	C_Container.PickupContainerItem(self:GetBankTabID(), self:GetContainerSlotID());
+	self:HandleItemPickup();
 end
 
 function BankPanelItemButtonMixin:OnUpdate()
@@ -1166,6 +1189,7 @@ function BankPanelMixin:CloseAllBankPopups()
 	StaticPopup_Hide("BANK_MONEY_WITHDRAW");
 	StaticPopup_Hide("BANK_MONEY_DEPOSIT");
 	StaticPopup_Hide("BANK_CONFIRM_CLEANUP");
+	StaticPopup_Hide("ACCOUNT_BANK_DEPOSIT_NO_REFUND_CONFIRM");
 end
 
 function BankPanelMixin:HideAllPrompts()
@@ -1953,6 +1977,11 @@ function BankPanelCheckboxMixin:OnShow()
 	self:Init();
 end
 
+function BankPanelCheckboxMixin:OnClick()
+	local clickSound = self:GetChecked() and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON;
+	PlaySound(clickSound);
+end
+
 function BankPanelCheckboxMixin:Init()
 	if self.fontObject then
 		self.Text:SetFontObject(self.fontObject);
@@ -1960,6 +1989,10 @@ function BankPanelCheckboxMixin:Init()
 
 	if self.textWidth then
 		self.Text:SetWidth(self.textWidth);
+	end
+
+	if self.maxTextLines then
+		self.Text:SetMaxLines(self.maxTextLines);
 	end
 
 	if self.text then
@@ -1975,6 +2008,7 @@ function BankPanelIncludeReagentsCheckboxMixin:OnShow()
 end
 
 function BankPanelIncludeReagentsCheckboxMixin:OnClick()
+	BankPanelCheckboxMixin.OnClick(self);
 	SetCVar("bankAutoDepositReagents", self:GetChecked());
 end
 
