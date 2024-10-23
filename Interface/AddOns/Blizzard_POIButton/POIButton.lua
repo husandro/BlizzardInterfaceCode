@@ -268,7 +268,9 @@ local function POIButton_UpdateQuestInProgressStyle(poiButton)
 		POIButton_SetAtlas(poiButton.HighlightTexture, nil, nil, POIButton_GetAtlasInfoHighlight(poiButton));
 	end
 
-	 poiButton:UpdateInProgress();
+	poiButton:ClearQuestTagInfo();
+	poiButton:UpdateInProgress();
+	poiButton:UpdateUnderlay();
 end
 
 local function POIButton_UpdateNormalStyle(poiButton)
@@ -397,6 +399,10 @@ end
 
 POIButtonMixin = {};
 
+function POIButtonMixin:IsPOIButton()
+    return true;
+end
+
 function POIButtonMixin:OnShow()
 	EventRegistry:RegisterCallback("Supertracking.OnChanged", self.OnSuperTrackingChanged, self);
 end
@@ -501,7 +507,7 @@ function POIButtonMixin:OnEnter()
 		else
 			self.HighlightTexture:Show();
 
-			if self.UnderlayBannerAtlasHighlight then
+			if self.UnderlayBannerAtlasHighlight and self:IsUnderlayBannerEnabled() then
 				self.UnderlayBannerAtlasHighlight:Show();
 			end
 		end
@@ -667,6 +673,14 @@ function POIButtonMixin:GetQuestTagInfo()
 	return self.questTagInfo;
 end
 
+function POIButtonMixin:SetUnderlayBannerEnabled(enabled)
+	self.underlayBannerEnabled = enabled;
+end
+
+function POIButtonMixin:IsUnderlayBannerEnabled()
+	return self.underlayBannerEnabled;
+end
+
 do
 	local function CreateUnderlay(self)
 		local t = self:CreateTexture(nil, "BORDER");
@@ -701,18 +715,21 @@ do
 
 	local function GetUnderlayBannerAtlas(self)
 		local info = self:GetQuestTagInfo();
-		if info and (info.worldQuestType == Enum.QuestTagType.Capstone) then
+		self:SetUnderlayBannerEnabled(info and (info.worldQuestType == Enum.QuestTagType.Capstone));
+		
+		if self:IsUnderlayBannerEnabled() then
 			return "worldquest-Capstone-Banner", TextureKitConstants.IgnoreAtlasSize;
 		end
 	end
 
-	local function CheckCreateExtraTexture(self, parentKey, getAtlas, factory)
-		local atlas, useAtlasSize = getAtlas(self);
-		local texture = self[parentKey];
+	local function CheckCreateExtraTexture(self, parentKey, getAtlas, factory, overrideParent)
+		local atlas, useAtlasSize = getAtlas(self); -- self must be a POIButton here
+		local parent = overrideParent or self;
+		local texture = parent[parentKey];
 		if atlas and not texture then
-			texture = factory(self);
+			texture = factory(parent);
 			texture:SetAtlas(atlas, useAtlasSize);
-			self[parentKey] = texture;
+			parent[parentKey] = texture;
 		end
 
 		if texture then
@@ -735,7 +752,7 @@ do
 		end
 	end
 
-	local function CreateSubTypeIcon(self)
+	local function CreateSubTypeIcon(self) -- NOTE: self is a POIButton.Display here.
 		local t = self:CreateTexture(nil, "ARTWORK", nil, 2);
 		t:SetSize(32, 32); -- TODO: The 2x atlases weren't made correctly, must override size...remove this when the fix propagates
 		t:SetPoint("CENTER", self, "CENTER", 0, 0); -- TODO: Would be ideal to avoid hardcoding these sizes/offsets
@@ -743,7 +760,7 @@ do
 	end
 
 	function POIButtonMixin:UpdateSubTypeIcon()
-		CheckCreateExtraTexture(self, "SubTypeIcon", GetSubTypeAtlas, CreateSubTypeIcon);
+		CheckCreateExtraTexture(self, "SubTypeIcon", GetSubTypeAtlas, CreateSubTypeIcon, self.Display);
 	end
 end
 

@@ -54,10 +54,6 @@ local function IsBoostFlowValidForCharacter(flowData, level, boostInProgress, is
 		return false;
 	end
 
-	if (flowData.level < 70) and (raceFilename == "Dracthyr") then
-		return false;
-	end
-
 	local timerunningSeasonID = playerGUID and GetCharacterTimerunningSeasonID(playerGUID);
 	if timerunningSeasonID then
 		return false;
@@ -523,7 +519,7 @@ local function CharacterServices_IsCurrentSpecializationAllowed(classID, gender,
 end
 
 function CharacterServices_UpdateSpecializationButtons(classID, gender, parentFrame, owner, allowAllSpecs, isTrialBoost, currentSpecID, allowAutoSelectSpec)
-	local numSpecs = GetNumSpecializationsForClassID(classID);
+	local numSpecs = C_SpecializationInfo.GetNumSpecializationsForClassID(classID);
 
 	if not parentFrame.SpecButtons then
 		parentFrame.SpecButtons = {}
@@ -1322,7 +1318,8 @@ function RPEUpgradeSpecSelectBlock:Initialize(results, wasFromRewind)
 	end
 
 	-- Force expand character list if collapsed.
-	CharacterSelectUI:ExpandCharacterList();
+	local isExpanded = true;
+	CharacterSelectUI:ExpandCharacterList(isExpanded);
 	CharacterSelectUI:SetCharacterListToggleEnabled(false);
 
 	local basicInfo = GetBasicCharacterInfo(characterGuid);
