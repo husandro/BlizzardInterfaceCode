@@ -19,8 +19,7 @@ local TIMER_DATA = {
 			[3] = { SOUNDKIT.PLUNDERSTORM_COUNTDOWN4, },
 		},
 		startCallback = function()
-			-- For now only the party leader can select an area.
-			if UnitLeadsAnyGroup("player") then
+			if C_GameRules.IsGameRuleActive(Enum.GameRule.PlunderstormAreaSelection) and not C_WowLabsDataManager.GetConfirmedWoWLabsArea() then
 				OpenWorldMap();
 			end
 		end,

@@ -112,8 +112,16 @@ function HeaderPlunderstoreButtonMixin:OnClick()
 end
 
 function HeaderPlunderstoreButtonMixin:OnEnter()
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(PLUNDERSTORM_PLUNDER_STORE_TITLE);
+	self:SetEnabled(C_AccountStore.GetStoreFrontState(Constants.AccountStoreConsts.PlunderstormStoreFrontID) == Enum.AccountStoreState.Available);
+
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
+
+	if self:IsEnabled() then
+		GameTooltip:SetText(PLUNDERSTORM_PLUNDER_STORE_TITLE);
+	else
+		GameTooltip:SetText(ACCOUNT_STORE_UNAVAILABLE);
+	end
+
 	GameTooltip:Show();
 end
 
@@ -195,29 +203,19 @@ PlunderstormDropMapButtonMixin = {};
 function PlunderstormDropMapButtonMixin:OnShow()
 	PrematchHeaderBaseButtonMixin.OnShow(self);
 
-	if (IsInTrainingMode()) then
+	if (IsInTrainingMode() or not C_GameRules.IsGameRuleActive(Enum.GameRule.PlunderstormAreaSelection)) then
 		self:Hide();
 		return;
 	end
 end
 
 function PlunderstormDropMapButtonMixin:OnClick()
-	if UnitLeadsAnyGroup("player") then
-		ToggleWorldMap();
-	end
+	ToggleWorldMap();
 end
 
 function PlunderstormDropMapButtonMixin:OnEnter()
-	self:SetEnabled(UnitLeadsAnyGroup("player"));
-
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-
-	if self:IsEnabled() then
-		GameTooltip_AddNormalLine(GameTooltip, PLUNDERSTORM_DROP_MAP_BUTTON_TOOLTIP);
-	else
-		GameTooltip_AddNormalLine(GameTooltip, PLUNDERSTORM_DROP_MAP_BUTTON_DISABLED_TOOLTIP);
-	end
-
+	GameTooltip_AddNormalLine(GameTooltip, PLUNDERSTORM_DROP_MAP_BUTTON_TOOLTIP);
 	GameTooltip:Show();
 end
 
@@ -228,10 +226,6 @@ end
 function PlunderstormDropMapButtonMixin:ShouldShowSelectedState()
 	-- Overrides PrematchHeaderBaseButtonMixin.
 
-	if not UnitLeadsAnyGroup("player") then
-		return false;
-	end
-
 	return WorldMapFrame and WorldMapFrame:IsShown();
 end
 
@@ -240,7 +234,11 @@ end
 TrainingLobbyQueueMixin = {};
 
 function TrainingLobbyQueueMixin:OnLoad()
-	self.TEMPuseLocalPlayIndex = true;
+	self.useLocalPlayIndex = true;
+
+	local numGroupMembers = GetNumGroupMembers();
+	self.localPlayIndex = numGroupMembers <= 1 and Enum.PartyPlaylistEntry.SoloGameMode or Enum.PartyPlaylistEntry.DuoGameMode;
+	self.isInTrainingMode = IsInTrainingMode();
 
 	--Custom anchoring for centering the queue container in the portrait frame
 	self.QueueContainer:ClearAllPoints();
@@ -258,9 +256,17 @@ function TrainingLobbyQueueMixin:OnShow()
 		return;
 	end
 
+	local numGroupMembers = GetNumGroupMembers();
+	if (numGroupMembers > 1) then
+		self.localPlayIndex = Enum.PartyPlaylistEntry.DuoGameMode;
+	end
+
 	QueueTypeSettingsFrameMixin.OnShow(self);
 
 	EventRegistry:TriggerEvent("TrainingLobbyQueue.ShownState", true);
+
+	local padding = 50;
+	self:SetWidth(self.QueueContainer:GetWidth() + padding);
 end
 
 function TrainingLobbyQueueMixin:OnHide()
@@ -269,15 +275,15 @@ function TrainingLobbyQueueMixin:OnHide()
 	EventRegistry:TriggerEvent("TrainingLobbyQueue.ShownState", false);
 end
 
-function TrainingLobbyQueueMixin:GetSelectedPartyPlayIndex()
-	return self.TEMPuseLocalPlayIndex and self.TEMPlocalPlayIndex or C_WoWLabsMatchmaking.GetPartyPlaylistEntry()
-end
-
 StartQueueButtonMixin = {};
+
+function StartQueueButtonMixin:OnShow()
+	self:SetText(not C_WoWLabsMatchmaking.IsPartyLeader() and WOWLABS_READY_GAME or WOW_LABS_START_QUEUE);
+end
 
 function StartQueueButtonMixin:OnClick()
 	local parent = self:GetParent();
-	C_WoWLabsMatchmaking.SetAutoQueueOnLogout(true, parent:GetSelectedPartyPlayIndex());
+	C_WoWLabsMatchmaking.SetAutoQueueOnLogout(true, parent:GetQueueType());
 	PlaySound(SOUNDKIT.IG_MAINMENU_LOGOUT);
 	ForceLogout();
 end
