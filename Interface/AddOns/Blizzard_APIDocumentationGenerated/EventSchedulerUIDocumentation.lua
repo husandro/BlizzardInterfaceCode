@@ -19,6 +19,7 @@ local EventSchedulerUI =
 		{
 			Name = "GetActiveContinentName",
 			Type = "Function",
+			MayReturnNothing = true,
 			Documentation = { "Returns the name of the continent with current events" },
 
 			Returns =
@@ -59,6 +60,7 @@ local EventSchedulerUI =
 		{
 			Name = "GetOngoingEvents",
 			Type = "Function",
+			MayReturnNothing = true,
 			Documentation = { "Will request data from the server on a throttle" },
 
 			Returns =
@@ -69,11 +71,22 @@ local EventSchedulerUI =
 		{
 			Name = "GetScheduledEvents",
 			Type = "Function",
+			MayReturnNothing = true,
 			Documentation = { "Will request data from the server on a throttle" },
 
 			Returns =
 			{
 				{ Name = "events", Type = "table", InnerType = "ScheduledEventInfo", Nilable = false },
+			},
+		},
+		{
+			Name = "HasData",
+			Type = "Function",
+			Documentation = { "True if the server sent a list, even if the list had 0 events." },
+
+			Returns =
+			{
+				{ Name = "hasData", Type = "bool", Nilable = false },
 			},
 		},
 		{

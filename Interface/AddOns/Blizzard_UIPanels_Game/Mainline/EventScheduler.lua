@@ -11,6 +11,13 @@ local function GetEventPOI(uiMapID, areaPoiID)
 	return poiInfo;
 end
 
+local function ShouldShowTimeLeftInTooltip(poiInfo)
+	if poiInfo.tooltipWidgetSet == 1355 then
+		return false;
+	end
+	return true;
+end
+
 local function ShouldHideRewardedEvents()
 	-- return GetCVarBool("hideRewardedEvents");
 	return false; -- remove this when issues are addressed
@@ -57,7 +64,7 @@ local s_templateInfoCache = CreateTemplateInfoCache();
 local eventSecondsFormatter = CreateFromMixins(SecondsFormatterMixin);
 eventSecondsFormatter:Init(0, SecondsFormatter.Abbreviation.None, true, true);
 
-local EventSchedulerAnimationManager = { anims = { }; };
+EventSchedulerAnimationManager = { anims = { }; };
 
 -- until the UI is reloaded, an event can only have one anim of each type
 function EventSchedulerAnimationManager:AddAnim(eventKey, animType)
@@ -142,6 +149,20 @@ function EventSchedulerAnimationManager:GetEventFrame(scrollBox, eventKey)
 		return eventInfo and eventInfo.eventKey == eventKey;
 	end);
 	return frame;
+end
+
+-- for tools
+function EventSchedulerAnimationManager:ClearAnims(eventKey)
+	for i = #self.anims, 1, -1 do
+		local anim = self.anims[i];
+		if anim.eventKey == eventKey then
+			table.remove(self.anims, i);
+		end
+	end
+end
+
+function EventSchedulerAnimationManager:ClearAllAnims()
+	wipe(self.anims);
 end
 
 EventSchedulerMixin = { };
@@ -267,6 +288,7 @@ function EventSchedulerMixin:AddScheduledEvents(dataProvider, scheduledEvents, h
 	local nextUpdateTime = nil;
 	local firstToday = true;
 	local firstOfAnyDay = true;
+	local numTodayEvents = 0;
 	local numFutureEvents = 0;
 	local lastUpdateTime = tonumber(C_CVar.GetCVar("eventSchedulerLastUpdate"));
 
@@ -278,11 +300,26 @@ function EventSchedulerMixin:AddScheduledEvents(dataProvider, scheduledEvents, h
 			local isHidden = hideRewardedEvents and eventInfo.rewardsClaimed;
 			if isHidden then
 				self.numHiddenEvents = self.numHiddenEvents + 1;
-			else
+			end
+
+			local showEvent = not isHidden;
+			if showEvent and eventInfo.endTime <= timeNow then
+				-- expired event, show it only if anim needs to play
+				local eventAnimatingOut = EventSchedulerAnimationManager:HasActiveAnim(eventInfo.eventKey, AnimType.Expired);
+				if not eventAnimatingOut and eventInfo.endTime > lastUpdateTime then
+					eventAnimatingOut = EventSchedulerAnimationManager:AddAnim(eventInfo.eventKey, AnimType.Expired);
+				end
+				showEvent = eventAnimatingOut;
+			end
+
+			if showEvent then
 				local uiMapID = nil;
 				local info = GetEventPOI(uiMapID, eventInfo.areaPoiID);
 				if info then
 					local eventDate = date("*t", eventInfo.startTime);
+					if eventDate.yday == dateNow.yday then
+						numTodayEvents = numTodayEvents + 1;
+					end
 					if eventDate.yday ~= lastSeenDay then
 						if lastEventData then
 							lastEventData.lastInSection = true;
@@ -293,6 +330,11 @@ function EventSchedulerMixin:AddScheduledEvents(dataProvider, scheduledEvents, h
 
 						local dateLabelData = { entryType = EntryType.Date, date = eventDate };
 						categorySubtree:Insert(dateLabelData);
+					end
+
+					-- play started anim if startTime was before lastUpdateTime
+					if timeNow >= eventInfo.startTime and eventInfo.startTime > lastUpdateTime and eventInfo.endTime > timeNow then
+						EventSchedulerAnimationManager:AddAnim(eventInfo.eventKey, AnimType.Started);
 					end
 
 					local wantAMPM = true;
@@ -313,18 +355,16 @@ function EventSchedulerMixin:AddScheduledEvents(dataProvider, scheduledEvents, h
 					lastEventData = eventData;
 					firstToday = false;
 					firstOfAnyDay = false;
-					if timeNow <= eventInfo.endTime then
-						if active then
-							if not nextUpdateTime or eventInfo.endTime < nextUpdateTime then
-								nextUpdateTime = eventInfo.endTime;
-							end
-						elseif eventInfo.endTime > timeNow then
-							numFutureEvents = numFutureEvents + 1;
-							-- if event does not have a reminder we need to update the UI if open when event starts
-							if not eventInfo.hasReminder and not hasActiveAnim and (not nextUpdateTime or eventInfo.startTime < nextUpdateTime) then
-								nextUpdateTime = eventInfo.startTime;
-							end
-						end
+
+					if eventInfo.endTime > timeNow then
+						numFutureEvents = numFutureEvents + 1;
+					end
+
+					if eventInfo.startTime > timeNow and (not nextUpdateTime or eventInfo.startTime < nextUpdateTime) then
+						nextUpdateTime = eventInfo.startTime;
+					end
+					if eventInfo.endTime > timeNow and (not nextUpdateTime or eventInfo.endTime < nextUpdateTime) then
+						nextUpdateTime = eventInfo.endTime;
 					end
 				end
 			end
@@ -335,10 +375,11 @@ function EventSchedulerMixin:AddScheduledEvents(dataProvider, scheduledEvents, h
 		lastEventData.lastInSection = true;
 	end
 
-	-- if nothing is showing because it's all hidden
-	local entryCount = categorySubtree:GetSize();
 	local headerData = categorySubtree:GetData();
+	headerData.numTodayEvents = numTodayEvents;
+	local entryCount = categorySubtree:GetSize();
 	headerData.entryCount = entryCount;
+	-- if nothing is showing because it's all hidden
 	if entryCount == 0 then
 		local noEventsData = { entryType = EntryType.NoEventsLabel, height = 35 };
 		categorySubtree:Insert(noEventsData);
@@ -373,63 +414,31 @@ function EventSchedulerMixin:Refresh()
 
 	local dataProvider = CreateTreeDataProvider();
 
-	-- show the loading frame if there are no events of any kind
 	local ongoingEvents = C_EventScheduler.GetOngoingEvents();
 	local scheduledEvents = C_EventScheduler.GetScheduledEvents();
+
+	-- show the loading frame while waiting on server response, and empty text if there were no events
 	if not ongoingEvents and not scheduledEvents then
-		self.LoadingFrame:Show();
+		if C_EventScheduler.HasData() then
+			self.LoadingFrame:Hide();
+			self.ScrollBox.EmptyText:Show();
+		else
+			self.LoadingFrame:Show();
+			self.ScrollBox.EmptyText:Hide();
+		end
 		self.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.DiscardScrollPosition);
 		return;
 	else
 		self.LoadingFrame:Hide();
+		self.ScrollBox.EmptyText:Hide();
 	end
 
-	-- do this before changing the dataProvider to know which events need ExpiredAnim
-	self:BuildAnimationsList(scheduledEvents);
-	
 	self:AddAllEvents(dataProvider, ongoingEvents, scheduledEvents);
 	self.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition);
 
 	EventSchedulerAnimationManager:PlayNextAnimation(self.ScrollBox);
 
 	C_CVar.SetCVar("eventSchedulerLastUpdate", time());
-end
-
-function EventSchedulerMixin:BuildAnimationsList(scheduledEvents)
-	if not scheduledEvents then
-		return;
-	end
-
-	local timeNow = time();
-	local lastUpdateTime = tonumber(C_CVar.GetCVar("eventSchedulerLastUpdate"));
-
-	-- first check for expirations
-	local timeLimit = timeNow - Constants.EventScheduler.SCHEDULED_EVENT_PAST_LIMIT_SECONDS;
-	local oldDataProvider = self.ScrollBox:GetDataProvider();
-	if oldDataProvider then
-		local insertIndex = 0;
-		for index, node in oldDataProvider:EnumerateEntireRange() do
-			local data = node:GetData();
-			if data.entryType == EntryType.ScheduledEvent then
-				local eventInfo = data.eventInfo;
-				if eventInfo.endTime <= timeNow and eventInfo.endTime >= timeLimit then
-					local alreadyHasAnim = EventSchedulerAnimationManager:HasActiveAnim(eventInfo.eventKey, AnimType.Expired);
-					if alreadyHasAnim or EventSchedulerAnimationManager:AddAnim(eventInfo.eventKey, AnimType.Expired) then
-						-- force add back into list
-						insertIndex = insertIndex + 1;
-						table.insert(scheduledEvents, insertIndex, eventInfo);						
-					end
-				end
-			end
-		end
-	end
-
-	-- now starts
-	for i, eventInfo in ipairs(scheduledEvents) do
-		if timeNow >= eventInfo.startTime and eventInfo.startTime > lastUpdateTime and eventInfo.endTime > timeNow then
-			EventSchedulerAnimationManager:AddAnim(eventInfo.eventKey, AnimType.Started);
-		end
-	end
 end
 
 function EventSchedulerMixin:OnAnimationFinished(eventKey, animType)
@@ -442,11 +451,12 @@ end
 EventSchedulerBaseEntryMixin = { };
 
 function EventSchedulerBaseEntryMixin:OnEnter()
-	AreaPoiUtil.TryShowTooltip(self, "ANCHOR_RIGHT", self.info);
+	self:UpdateTooltip();
 	if not self:HasRewardsClaimed() then
 		self.Name:SetTextColor(HIGHLIGHT_FONT_COLOR:GetRGB());
 		self.Location:SetTextColor(NORMAL_FONT_COLOR:GetRGB());
 	end
+	self.Highlight:Show();
 end
 
 function EventSchedulerBaseEntryMixin:OnLeave()
@@ -456,6 +466,7 @@ function EventSchedulerBaseEntryMixin:OnLeave()
 		self.Name:SetTextColor(EVENT_SCHEDULER_NAME_COLOR:GetRGB());
 		self.Location:SetTextColor(EVENT_SCHEDULER_LOCATION_COLOR:GetRGB());
 	end
+	self.Highlight:Hide();
 end
 
 function EventSchedulerBaseEntryMixin:OnMouseUp(button, upInside)
@@ -464,6 +475,16 @@ function EventSchedulerBaseEntryMixin:OnMouseUp(button, upInside)
 			OpenMapToEventPoi(self.info.areaPoiID);
 		end
 	end
+end
+
+function EventSchedulerBaseEntryMixin:UpdateTooltip()
+	if self.showTimeLeft then
+		self.info.secondsLeft = self.eventInfo.endTime - time();
+	else
+		self.info.secondsLeft = nil;
+	end
+
+	AreaPoiUtil.TryShowTooltip(self, "ANCHOR_RIGHT", self.info);
 end
 
 function EventSchedulerBaseEntryMixin:HasDisplayName()
@@ -496,7 +517,7 @@ function EventSchedulerOngoingEntryMixin:Init(data)
 	self.Icon:SetAtlas(self.info.atlasName, TextureKitConstants.UseAtlasSize);
 
 	local hasRewardsClaimed = self:HasRewardsClaimed();
-	if self.hasRewardsClaimed then
+	if hasRewardsClaimed then
 		self.Background:SetAtlas("event-scheduler-ongoing-events-card-complete", TextureKitConstants.UseAtlasSize);
 		self.Name:SetTextColor(DISABLED_FONT_COLOR:GetRGB());
 		self.Name:SetWidth(220);
@@ -507,7 +528,7 @@ function EventSchedulerOngoingEntryMixin:Init(data)
 		self.Name:SetWidth(250);
 		self.Location:SetTextColor(EVENT_SCHEDULER_LOCATION_COLOR:GetRGB());
 	end
-	self.CheckIcon:SetShown(self.hasRewardsClaimed);
+	self.CheckIcon:SetShown(hasRewardsClaimed);
 end
 
 function EventSchedulerOngoingEntryMixin:OnMouseUp(button, upInside)
@@ -553,6 +574,9 @@ function EventSchedulerScheduledEntryMixin:Init(data)
 
 	self.info = data.poiInfo;
 	self.eventInfo = data.eventInfo;
+
+	-- data.active also rules out ongoing events, which do not have an active state
+	self.showTimeLeft = data.active and ShouldShowTimeLeftInTooltip(self.info);
 
 	if not EventSchedulerAnimationManager:HasAnim(self.eventInfo.eventKey, AnimType.Expired) then
 		self:SetAlpha(1);
@@ -628,6 +652,8 @@ end
 function EventSchedulerScheduledEntryMixin:PlayStartedAnim(elapsedTime)
 	local reverse = false;
 	self.StartedAnim:Play(reverse, elapsedTime);
+	local forceNoDuplicates = true;
+	PlaySound(SOUNDKIT.UI_EVENT_SCHEDULER_EVENT_ACTIVE, nil, forceNoDuplicates);
 end
 
 function EventSchedulerScheduledEntryMixin:OnStartedAnimFinished()
@@ -660,10 +686,11 @@ function EventSchedulerBaseLabelMixin:Init(data)
 				SCHEDULED_ENTRY_HEIGHT = templateInfo.height;
 			end
 			local height;
-			if data.entryCount <= 1 then
+			local count = data.numTodayEvents;
+			if count <= 1 then
 				height = SCHEDULED_ENTRY_HEIGHT;
 			else
-				height = data.entryCount * SCHEDULED_ENTRY_HEIGHT + (data.entryCount - 1) * ELEMENT_SPACING;				
+				height = count * SCHEDULED_ENTRY_HEIGHT + (count - 1) * ELEMENT_SPACING;				
 			end
 			self.Timeline:SetHeight(height + SCHEDULED_HEADER_SPACING);
 		end
@@ -799,6 +826,8 @@ function EventSchedulerReminderManager:AnnounceEvent(eventInfo, time)
 			local timeText = eventSecondsFormatter:Format(time);
 			Chat_AddSystemMessage(EVENT_SCHEDULER_CHAT_REMINDER_SOON:format(nameLink, timeText));
 		end
+		local forceNoDuplicates = true;
+		PlaySound(SOUNDKIT.UI_EVENT_SCHEDULER_CHIME, nil, forceNoDuplicates);
 	end
 end
 

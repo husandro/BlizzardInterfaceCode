@@ -125,6 +125,8 @@ end
 function WorldMapMixin:OnLoad()
 	RegisterUIPanel(self, { area = "left", pushable = 0, xoffset = 0, yoffset = 0, whileDead = 1, minYOffset = 0, maximizePoint = "TOP", allowOtherPanels = 1 });
 
+	self.needUpdateDisplayState = true;
+
 	MapCanvasMixin.OnLoad(self);
 
 	self:SetupTitle();
@@ -165,8 +167,7 @@ function WorldMapMixin:OnEvent(event, ...)
 		C_WowLabsDataManager.QuerySelectedWoWLabsArea();
 		C_WowLabsDataManager.QueryWoWLabsAreaInfo();
 	elseif event == "VARIABLES_LOADED" then
-		local displayState = self:GetOpenDisplayState();
-		self:SetDisplayState(displayState);
+		self.needUpdateDisplayState = true;
 	elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
 		if self:IsMaximized() then
 			self:UpdateMaximizedSize();
@@ -330,6 +331,12 @@ function WorldMapMixin:OnMapChanged()
 end
 
 function WorldMapMixin:OnShow()
+	if self.needUpdateDisplayState then
+		local displayState = self:GetOpenDisplayState();
+		self:SetDisplayState(displayState);
+		self.needUpdateDisplayState = nil;
+	end
+
 	local frameStrata = C_GameRules.GetGameRuleAsFrameStrata(Enum.GameRule.WorldMapFrameStrata);
 	if frameStrata and frameStrata ~= "UNKNOWN" then
 		self:SetFrameStrata(frameStrata);
@@ -375,11 +382,13 @@ function WorldMapMixin:OnHide()
 	UpdateMicroButtons();
 end
 
+local function SecureRefreshOverlayFrame(_, frame)
+	frame:Refresh();
+end
+
 function WorldMapMixin:RefreshOverlayFrames()
 	if self.overlayFrames then
-		for i, frame in ipairs(self.overlayFrames) do
-			frame:Refresh();
-		end
+		secureexecuterange(self.overlayFrames, SecureRefreshOverlayFrame);
 	end
 end
 

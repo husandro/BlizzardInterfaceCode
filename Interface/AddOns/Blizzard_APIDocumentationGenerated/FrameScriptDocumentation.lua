@@ -50,6 +50,7 @@ local FrameScript =
 		{
 			Name = "GetEventTime",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -62,6 +63,16 @@ local FrameScript =
 				{ Name = "numExecutedHandlers", Type = "number", Nilable = false },
 				{ Name = "slowestHandlerName", Type = "cstring", Nilable = false },
 				{ Name = "slowestHandlerTime", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetSourceLocation",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Returns =
+			{
+				{ Name = "location", Type = "string", Nilable = false },
 			},
 		},
 		{

@@ -1696,12 +1696,19 @@
 	Note that you MUST have a child FontString with ParentKey "Text"
 *******************************************************************************
 -->
-	<Frame name="TruncatedTooltipFontStringWrapperTemplate" inherits="ResizeLayoutFrame" virtual="true" mixin="TruncatedTooltipFontStringWrapperMixin">
+	<Frame name="TruncatedTooltipFontStringWrapperTemplate" inherits="ResizeLayoutFrame" mixin="TruncatedTooltipFontStringWrapperMixin" virtual="true">
 		<Scripts>
 			<OnEnter method="OnEnter"/>
 			<OnLeave method="OnLeave"/>
 		</Scripts>
 	</Frame>
+
+	<FontString name="TruncatedTooltipFontStringTemplate" mixin="TruncatedTooltipFontStringMixin" virtual="true">
+		<Scripts>
+			<OnEnter method="OnEnter"/>
+			<OnLeave method="OnLeave"/>
+		</Scripts>
+	</FontString>
 
 	<!--
 *******************************************************************************
@@ -2389,9 +2396,9 @@
 		 frame to be parented to the appropriate top level parent. -->
 	<Frame name="TopLevelParentScaleFrameTemplate" mixin="TopLevelParentScaleFrameMixin" virtual="true">
 		<Scripts>
-			<OnLoad method="OnScaleFrameLoad" inherit="prepend"/>
-			<OnEvent method="OnScaleFrameEvent" inherit="prepend"/>
-			<OnShow method="OnScaleFrameShow" inherit="prepend"/>
+			<OnLoad method="OnScaleFrameLoad" inherit="prepend" />
+			<OnEvent method="OnScaleFrameEvent" inherit="prepend" />
+			<OnShow method="OnScaleFrameShow" inherit="prepend" />
 		</Scripts>
 	</Frame>
 

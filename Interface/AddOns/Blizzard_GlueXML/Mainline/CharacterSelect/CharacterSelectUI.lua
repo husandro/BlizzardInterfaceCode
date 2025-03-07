@@ -245,6 +245,12 @@ function CharacterSelectUIMixin:SetCharacterDisplay(selectedCharacterID)
 	end);
 
 	if selectedElementData then
+		self:SetDisplay(selectedElementData, selectedCharacterID);
+	end
+end
+
+function CharacterSelectUIMixin:SetDisplay(selectedElementData, selectedCharacterID)
+	if selectedElementData then
 		local showModelFFX = true;
 		-- See if the map scene assets are present to load.
 		if selectedElementData.isGroup then
@@ -289,7 +295,7 @@ function CharacterSelectUIMixin:SetCharacterDisplay(selectedCharacterID)
 				end
 
 				for _, childElementData in ipairs(selectedElementData.characterData) do
-					if childElementData.characterID == selectedCharacterID then
+					if selectedCharacterID and childElementData.characterID == selectedCharacterID then
 						PlayRandomAnimation(childElementData.characterID, Enum.WarbandSceneAnimationEvent.Select, isSceneChange);
 					elseif not childElementData.isEmpty then
 						local pose = warbandSceneLoaded and Enum.WarbandSceneAnimationEvent.Deselect or Enum.WarbandSceneAnimationEvent.StartingPose;
@@ -306,7 +312,9 @@ function CharacterSelectUIMixin:SetCharacterDisplay(selectedCharacterID)
 			end
 			self.FadeInBackground:Hide();
 
-			SetCharSelectBackground(GetSelectBackgroundModel(selectedCharacterID));
+			if selectedCharacterID then
+				SetCharSelectBackground(GetSelectBackgroundModel(selectedCharacterID));
+			end
 			self:ShowModelFFX();
 		end
 	end
@@ -467,8 +475,8 @@ function CharacterSelectUIMixin:IsCollectionsActive()
 	return self.CollectionsFrame:IsShown();
 end
 
-function CharacterSelectUIMixin:SetGameEnvironmentEnabled(enabled)
-	self.VisibilityFramesContainer.NavBar:SetGameEnvironmentButtonEnabled(enabled);
+function CharacterSelectUIMixin:SetGameModeSelectionEnabled(enabled)
+	self.VisibilityFramesContainer.NavBar:SetGameModeButtonEnabled(enabled);
 end
 
 function CharacterSelectUIMixin:SetMenuEnabled(enabled)
@@ -694,6 +702,7 @@ function CharacterDeletionDialogMixin:DeleteCharacter()
 	DeleteCharacter(self.characterGuid);
 	self:Hide();
 	PlaySound(SOUNDKIT.GS_TITLE_OPTION_OK);
+	CharacterSelectCharacterFrame:ClearSearch();
 	GlueDialog_Show("CHAR_DELETE_IN_PROGRESS");
 end
 

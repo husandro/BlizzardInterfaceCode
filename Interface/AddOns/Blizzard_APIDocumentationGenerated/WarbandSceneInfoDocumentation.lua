@@ -18,6 +18,7 @@ local WarbandSceneInfo =
 		{
 			Name = "GetWarbandSceneEntry",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -113,7 +114,6 @@ local WarbandSceneInfo =
 				{ Name = "description", Type = "cstring", Nilable = false },
 				{ Name = "source", Type = "cstring", Nilable = false },
 				{ Name = "quality", Type = "number", Nilable = false },
-				{ Name = "qualityColor", Type = "colorRGB", Mixin = "ColorMixin", Nilable = false },
 				{ Name = "textureKit", Type = "textureKit", Nilable = false },
 				{ Name = "isFavorite", Type = "bool", Nilable = false, Default = false },
 				{ Name = "hasFanfare", Type = "bool", Nilable = false, Default = false },
