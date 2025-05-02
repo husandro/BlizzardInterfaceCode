@@ -408,14 +408,13 @@ function SetItemRef(link, text, button, chatFrame)
 		return;
 	elseif ( strsub(link, 1, 21) ==  "reportcensoredmessage" ) then 
 		local hyperlinkLineID = tonumber(select(2, strsplit(":", link)));
-		local playerLocation = PlayerLocation:CreateFromChatLineID(hyperlinkLineID);
 		local reportTarget = C_ChatInfo.GetChatLineSenderGUID(hyperlinkLineID);
 		local playerName = C_ChatInfo.GetChatLineSenderName(hyperlinkLineID);
 
 		local reportInfo = ReportInfo:CreateReportInfoFromType(Enum.ReportType.Chat);
 		reportInfo:SetReportTarget(reportTarget);
 		reportInfo:SetReportedChatInline();
-		ReportFrame:InitiateReport(reportInfo, playerName, playerLocation);
+		ReportFrame:InitiateReport(reportInfo, playerName);
 		return; 
 	elseif ( strsub(link, 1, 12) ==  "dungeonScore" ) then 
 		DisplayDungeonScoreLink(link);
@@ -730,7 +729,7 @@ function DisplayDungeonScoreLink(link)
 	end
 
 	-- Sort Alphabetically. 
-	table.sort(sortTable, function(a, b) strcmputf8i(a.mapName, b.mapName); end);
+	table.sort(sortTable, function(a, b) return strcmputf8i(a.mapName, b.mapName) < 0; end);
 
 	for i = 1, #sortTable do 
 		local textColor = sortTable[i].completedInTime and HIGHLIGHT_FONT_COLOR or GRAY_FONT_COLOR; 
