@@ -9,7 +9,7 @@ end
 
 SecureCmdList["PET_ASSIST"] = function(msg)
 	if ( SecureCmdOptionParse(msg) ) then
-		PetAssistMode();
+		C_PetInfo.PetAssistMode();
 	end
 end
 

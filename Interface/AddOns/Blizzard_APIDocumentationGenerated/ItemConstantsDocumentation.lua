@@ -29,7 +29,7 @@ local ItemConstants =
 				{ Name = "Agility", Type = "BonusStatIndex", EnumValue = 3 },
 				{ Name = "Strength", Type = "BonusStatIndex", EnumValue = 4 },
 				{ Name = "Intellect", Type = "BonusStatIndex", EnumValue = 5 },
-				{ Name = "SpiritUnused", Type = "BonusStatIndex", EnumValue = 6 },
+				{ Name = "Spirit", Type = "BonusStatIndex", EnumValue = 6 },
 				{ Name = "Stamina", Type = "BonusStatIndex", EnumValue = 7 },
 				{ Name = "Energy", Type = "BonusStatIndex", EnumValue = 8 },
 				{ Name = "Rage", Type = "BonusStatIndex", EnumValue = 9 },
@@ -228,9 +228,9 @@ local ItemConstants =
 		{
 			Name = "ItemConsumableSubclass",
 			Type = "Enumeration",
-			NumValues = 12,
+			NumValues = 13,
 			MinValue = 0,
-			MaxValue = 11,
+			MaxValue = 12,
 			Fields =
 			{
 				{ Name = "Generic", Type = "ItemConsumableSubclass", EnumValue = 0 },
@@ -245,6 +245,7 @@ local ItemConstants =
 				{ Name = "VantusRune", Type = "ItemConsumableSubclass", EnumValue = 9 },
 				{ Name = "UtilityCurio", Type = "ItemConsumableSubclass", EnumValue = 10 },
 				{ Name = "CombatCurio", Type = "ItemConsumableSubclass", EnumValue = 11 },
+				{ Name = "Relic", Type = "ItemConsumableSubclass", EnumValue = 12 },
 			},
 		},
 		{

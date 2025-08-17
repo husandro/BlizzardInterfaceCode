@@ -3693,3 +3693,80 @@ end
 function UnitPopupResetChallengeButtonMixin:CanShow(contextData)
 	return C_ChallengeMode.IsChallengeModeActive();
 end
+
+UnitPopupRecentAllyNoteButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin);
+
+function UnitPopupRecentAllyNoteButtonMixin:GetText(contextData)
+	return RECENT_ALLIES_MENU_BUTTON_LABEL_SET_NOTE;
+end
+
+function UnitPopupRecentAllyNoteButtonMixin:CanShow(contextData)
+	return contextData.recentAllyData and C_RecentAllies.CanSetRecentAllyNote(contextData.recentAllyData.characterData.guid);
+end
+
+function UnitPopupRecentAllyNoteButtonMixin:OnClick(contextData)
+	local recentAllyData = contextData.recentAllyData;
+	local textArg1, textArg2 = recentAllyData.characterData.name, nil;
+	StaticPopup_Show("SET_RECENT_ALLY_NOTE", textArg1, textArg2, recentAllyData);
+end
+
+UnitPopupRecentAllyPinButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin);
+
+function UnitPopupRecentAllyPinButtonMixin:GetText(contextData)
+	return C_RecentAllies.IsRecentAllyPinned(contextData.recentAllyData.characterData.guid) and RECENT_ALLIES_MENU_BUTTON_LABEL_UNPIN or RECENT_ALLIES_MENU_BUTTON_LABEL_PIN;
+end
+
+function UnitPopupRecentAllyPinButtonMixin:CanShow(contextData)
+	return contextData.recentAllyData ~= nil;
+end
+
+function UnitPopupRecentAllyPinButtonMixin:OnClick(contextData)
+	local recentAllyGUID = contextData.recentAllyData.characterData.guid;
+	C_RecentAllies.SetRecentAllyPinned(recentAllyGUID, not C_RecentAllies.IsRecentAllyPinned(recentAllyGUID));
+end
+
+UnitPopupAddRecentAllyBattleTagFriendButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin);
+
+function UnitPopupAddRecentAllyBattleTagFriendButtonMixin:GetText(contextData)
+	return SEND_BATTLETAG_REQUEST;
+end
+
+function UnitPopupAddRecentAllyBattleTagFriendButtonMixin:CanShow(contextData)
+	return contextData.recentAllyData ~= nil;
+end
+
+function UnitPopupAddRecentAllyBattleTagFriendButtonMixin:IsDisabledInKioskMode()
+	return true;
+end
+
+function UnitPopupAddRecentAllyBattleTagFriendButtonMixin:OnClick(contextData)
+	C_BattleNet.BNCheckBattleTagInviteToRecentAlly(contextData.recentAllyData.characterData.guid);
+end
+
+function UnitPopupAddRecentAllyBattleTagFriendButtonMixin:IsEnabled(contextData)
+	return BNFeaturesEnabledAndConnected();
+end
+
+UnitPopupReportRecentAllyButtonMixin = CreateFromMixins(UnitPopupReportButtonMixin);
+
+function UnitPopupReportRecentAllyButtonMixin:GetText(contextData)
+	return REPORT_IN_WORLD_PLAYER;
+end
+
+function UnitPopupReportRecentAllyButtonMixin:GetReportType()
+	return Enum.ReportType.RecentAlly;
+end
+
+
+function UnitPopupReportRecentAllyButtonMixin:CanShow(contextData)
+	if not UnitPopupReportButtonMixin.CanShow(self, contextData) then
+		return false;
+	end
+
+	local playerLocation = UnitPopupSharedUtil.TryCreatePlayerLocation(contextData);
+	if not playerLocation then
+		return false;
+	end
+
+	return not (playerLocation:IsChatLineID() or playerLocation:IsCommunityData());
+end
