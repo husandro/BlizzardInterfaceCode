@@ -63,6 +63,7 @@ HelpTip.ButtonStyle = {
 	Okay = 3,
 	GotIt = 4,
 	Next = 5,
+	Exit = 6,
 };
 
 HelpTip.HideReason = {
@@ -127,6 +128,7 @@ HelpTip.Buttons = {
 	[HelpTip.ButtonStyle.Okay]	= { textWidthAdj = 0,	heightAdj = 30,	parentKey = "OkayButton", text = OKAY },
 	[HelpTip.ButtonStyle.GotIt]	= { textWidthAdj = 0,	heightAdj = 30,	parentKey = "OkayButton", text = HELP_TIP_BUTTON_GOT_IT },
 	[HelpTip.ButtonStyle.Next]	= { textWidthAdj = 0,	heightAdj = 30,	parentKey = "OkayButton", text = NEXT },
+	[HelpTip.ButtonStyle.Exit]	= { textWidthAdj = 0,	heightAdj = 30,	parentKey = "OkayButton", text = HELP_TIP_EXIT },
 };
 
 HelpTip.verticalPadding	 = 31;
@@ -194,6 +196,10 @@ function HelpTip:CanShow(info)
 		return false;
 	end
 
+	if self:IsRestricted(info) then
+		return false;
+	end
+
 	if info.checkCVars then
 		if info.cvar then
 			if GetCVar(info.cvar) == info.cvarValue then
@@ -224,6 +230,24 @@ function HelpTip:CanShow(info)
 	end
 
 	return true;
+end
+
+function HelpTip:IsRestricted(info)
+	if C_PlayerInfo.IsPlayerInRPE() then
+		-- in RPE block almost all helptips
+		if info.system == "TutorialSoftTargetInteraction" then
+			return false;
+		end
+		if info.text == TALENT_MICRO_BUTTON_NO_HERO_SPEC
+		or info.text == TALENT_MICRO_BUTTON_UNSPENT_TALENTS
+		or info.text == RPE_STARTER_BUILD_TUTORIAL
+		or info.text == TUTORIAL_SUPERTRACK_STEP_1 then
+			return false;
+		end
+		return true;
+	end
+
+	return false;
 end
 
 function HelpTip:ForceHideAll()

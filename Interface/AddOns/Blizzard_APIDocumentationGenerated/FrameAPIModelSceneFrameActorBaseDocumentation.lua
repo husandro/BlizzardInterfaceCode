@@ -350,6 +350,18 @@ local FrameAPIModelSceneFrameActorBase =
 			},
 		},
 		{
+			Name = "SetGradientMask",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "gradientIndex0", Type = "number", Nilable = false },
+				{ Name = "gradientIndex1", Type = "number", Nilable = false },
+				{ Name = "gradientIndex2", Type = "number", Nilable = false },
+				{ Name = "gradientIndex3", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "SetModelByCreatureDisplayID",
 			Type = "Function",
 

@@ -204,6 +204,11 @@ local CatalogShop =
 			Name = "OpenCatalogShopInteraction",
 			Type = "Function",
 
+			Arguments =
+			{
+				{ Name = "shouldAllowMovement", Type = "bool", Nilable = false, Default = false },
+			},
+
 			Returns =
 			{
 				{ Name = "shoppingSessionUUIDStr", Type = "string", Nilable = false },

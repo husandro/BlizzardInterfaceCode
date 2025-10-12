@@ -56,7 +56,7 @@ function CatalogShopMixin:OnLoad_CatalogShop()
 	EventRegistry:RegisterCallback("CatalogShop.OnNoProductsSelected", self.OnNoProductsSelected, self);
 	EventRegistry:RegisterCallback("CatalogShop.OnCategorySelected", self.OnCategorySelected, self);
 
-	self:SetPortraitToAsset("Interface\\Icons\\WoW_Store");
+	self:SetPortraitToAsset("Interface\\Icons\\UI_Shop");
 	self:SetTitle(BLIZZARD_STORE);
 
 	if ( C_Glue.IsOnGlueScreen() ) then
