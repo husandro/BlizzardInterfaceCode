@@ -98,6 +98,12 @@ function HousingDashboardHouseInfoMixin:OnEvent(event, ...)
 end
 
 function HousingDashboardHouseInfoMixin:OnHouseListUpdated(houseInfoList)
+	-- Don't bother thrashing everything if nothing in the list has changed
+	-- Which is likely since we re-request this list on every OnShow
+	if self.playerHouseList and tCompare(self.playerHouseList, houseInfoList, 2) then
+		return;
+	end
+
 	self.playerHouseList = houseInfoList;
 
 	self.ContentFrame.HouseUpgradeFrame:OnHouseListUpdated(houseInfoList);
@@ -120,10 +126,21 @@ function HousingDashboardHouseInfoMixin:OnHouseListUpdated(houseInfoList)
 end
 
 function HousingDashboardHouseInfoMixin:RefreshHouseDropdown(houseInfoList)
+	local oldSelectedHouseID = self.selectedHouseID;
 	self.selectedHouseID = 1;
+
+	if oldSelectedHouseID then
+		local newSelectedHouseInfo = houseInfoList[oldSelectedHouseID];
+		-- If we had something previously selected, and it still exists in the updated list, maintain that selection
+		if self.selectedHouseInfo and self.selectedHouseInfo.houseGUID == newSelectedHouseInfo.houseGUID then
+			self.selectedHouseID = oldSelectedHouseID;
+		end
+	end
 
 	local function OnHouseSelected(houseInfoID)
 		--TODO: update endeavors
+		self.selectedHouseID = houseInfoID;
+		self.selectedHouseInfo = self.playerHouseList[houseInfoID];
 		self.ContentFrame.HouseUpgradeFrame:OnHouseSelected(houseInfoID);
 	end
 
@@ -138,7 +155,6 @@ function HousingDashboardHouseInfoMixin:RefreshHouseDropdown(houseInfoList)
 		end;
 
 		local function SetSelected(houseInfoID)
-			self.selectedHouseID = houseInfoID;
 			OnHouseSelected(houseInfoID);
 		end;
 
@@ -147,7 +163,8 @@ function HousingDashboardHouseInfoMixin:RefreshHouseDropdown(houseInfoList)
 			rootDescription:CreateRadio(houseInfo.houseName, IsSelected, SetSelected, houseInfoID);
 		end
 	end);
-	OnHouseSelected(1);
+
+	OnHouseSelected(self.selectedHouseID);
 end
 
 function HousingDashboardHouseInfoMixin:OnHouseFinderButtonClicked()
