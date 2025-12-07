@@ -226,12 +226,21 @@ function CatalogShopDefaultProductCardMixin:Layout()
 		self:SetModelScene(self.productInfo, true, displayInfo, productType);
 	end
 	container.Name:SetText(self.productInfo.name);
+
 	local isFullyOwned = self.productInfo.isFullyOwned;
 	container.PurchasedIcon:SetShown(isFullyOwned);
+
 	local discountPercentage = self.productInfo.discountPercentage or 0;
-	container.DiscountSaleTag:SetShown(not isFullyOwned and discountPercentage > 0);
-	container.DiscountAmount:SetShown(not isFullyOwned and discountPercentage > 0);
+	local shouldShowDiscountPercentage = (not isFullyOwned) and discountPercentage > 0;
+	container.DiscountSaleTag:SetShown(shouldShowDiscountPercentage);
+	container.DiscountAmount:SetShown(shouldShowDiscountPercentage);
 	container.DiscountAmount:SetText(string.format(CATALOG_SHOP_DISCOUNT_FORMAT, discountPercentage));
+
+	local consumableQuantity = self.productInfo.consumableQuantity;
+	local shouldShowConsumableQuantity = (not shouldShowDiscountPercentage) and consumableQuantity;
+	container.ConsumableQuantityBackground:SetShown(shouldShowConsumableQuantity);
+	container.ConsumableQuantityText:SetShown(shouldShowConsumableQuantity);
+	container.ConsumableQuantityText:SetText(consumableQuantity);
 end
 
 
@@ -322,38 +331,72 @@ end
 
 
 --------------------------------------------------
--- SMALL CATALOG SHOP BUY BUTTON CARD MIXIN
-SmallCatalogShopProductWithBuyButtonCardMixin = {};
-function SmallCatalogShopProductWithBuyButtonCardMixin:OnLoad()
+-- SMALL CATALOG SHOP HOUSING CURRENCY CARD MIXIN
+SmallCatalogShopHousingCurrencyCardMixin = {};
+function SmallCatalogShopHousingCurrencyCardMixin:OnLoad()
 	SmallCatalogShopProductCardMixin.OnLoad(self);
 end
+
+local CurrencyBreakpoints = {
+	[100] = "hearthsteel-icon-xs",
+	[500] = "hearthsteel-icon-sm",
+	[1000] = "hearthsteel-icon-md",
+	[2500] = "hearthsteel-icon-lg",
+	[5000] = "hearthsteel-icon-xl",
+	[10000] = "hearthsteel-icon-xxl",
+};
 
 local function BuyButtonCardLayout(card)
 	local container = card.ForegroundContainer;
 	local displayInfo = C_CatalogShop.GetCatalogShopProductDisplayInfo(card.productInfo.catalogShopProductID);
 
-	-- Skip access-specific display for unknown (cross-game) licenses
-	if displayInfo.hasUnknownLicense then
-		container.RectIcon:Hide();
-		return;
+	local virtualCurrencyInfo = card.productInfo.virtualCurrencies[1];
+	if virtualCurrencyInfo then
+		local amount = virtualCurrencyInfo.amount;
+		container.Name:SetText(string.format(HOUSING_VC_QUANTITY, amount));
+		local textureAtlas = CurrencyBreakpoints[amount] or "hearthsteel-icon-single";
+		container.RectIcon:SetAtlas(textureAtlas);
 	end
 
-	local atlasWidth = 140;
-	local atlasHeight = 140;
+	local divider = container.DividerTop;
+	divider:SetShown(true);
+	divider:ClearAllPoints();
+	divider:SetPoint("TOP", container, "BOTTOM", 0, 145);
+	divider:SetPoint("LEFT", 0, 0);
+	divider:SetPoint("RIGHT", 0, 0);
+
+	local nameElement = container.Name;
+	nameElement:ClearAllPoints();
+	nameElement:SetJustifyH("CENTER");
+	nameElement:SetJustifyV("MIDDLE");
+	nameElement:SetPoint("TOP", divider, "TOP", 0, -3);
+	nameElement:SetPoint("LEFT", 20, 0);
+	nameElement:SetPoint("RIGHT", -22, 0);
+	nameElement:SetPoint("BOTTOM", 0, 94);
+
+	local priceElement = container.Price;
+	priceElement:Hide();
+
+	local atlasWidth = 240;
+	local atlasHeight = 240;
+
+	local purchaseButton = card.PurchaseButton;
+	purchaseButton:SetText(card.productInfo.price);
+	purchaseButton:ClearAllPoints();
+	purchaseButton:SetPoint("BOTTOM", 0, 30);
 
 	container.RectIcon:ClearAllPoints();
-	container.RectIcon:SetPoint("CENTER", 0, 40);
+	container.RectIcon:SetPoint("CENTER", 0, 30);
 	container.RectIcon:SetSize(atlasWidth, atlasHeight);
+	container.RectIcon:Show();
 
-	if card.productInfo.previewIconTexture then
-		container.RectIcon:Show();
-		container.RectIcon:SetAtlas(card.productInfo.previewIconTexture);
-	else
-		container.RectIcon:Hide();
-	end
+	local background = card.BackgroundContainer.Background;
+	background:ClearAllPoints();
+	background:SetPoint("TOPLEFT", 20, -20);
+	background:SetPoint("BOTTOMRIGHT", -21, 21);
 end
 
-function SmallCatalogShopProductWithBuyButtonCardMixin:Layout()
+function SmallCatalogShopHousingCurrencyCardMixin:Layout()
 	SmallCatalogShopProductCardMixin.Layout(self);
 	BuyButtonCardLayout(self);
 end

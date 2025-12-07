@@ -29,7 +29,6 @@ function HousingCatalogFrameMixin:OneTimeInit()
 	self.catalogSearcher:SetResultsUpdatedCallback(function() self:OnEntryResultsUpdated(); end);
 	self.catalogSearcher:SetAutoUpdateOnParamChanges(false);
 	self.catalogSearcher:SetOwnedOnly(false);
-	self.catalogSearcher:SetIncludeMarketEntries(false);
 	self.catalogSearcher:SetEditorModeContext(displayContext);
 
 	self.Filters:Initialize(self.catalogSearcher);

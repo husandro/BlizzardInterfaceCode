@@ -4,7 +4,11 @@ do
 	if ( classFilename == "PALADIN" ) then
 		AuraUtil.IsPriorityDebuff = function(spellId)
 			local isForbearance = (spellId == 25771);	-- Forbearance
-			return isForbearance or securecallfunction(AuraUtil.CheckIsPriorityAura, spellId);
+			if isForbearance then
+				return true;
+			else
+				return securecallfunction(AuraUtil.CheckIsPriorityAura, spellId);
+			end
 		end
 	else
 		AuraUtil.IsPriorityDebuff = function(spellId)

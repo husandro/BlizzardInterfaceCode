@@ -47,6 +47,7 @@ local HousingLayoutPinFrameAPI =
 		{
 			Name = "Drag",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -184,6 +185,7 @@ local HousingLayoutPinFrameAPI =
 		{
 			Name = "SetUpdateCallback",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{

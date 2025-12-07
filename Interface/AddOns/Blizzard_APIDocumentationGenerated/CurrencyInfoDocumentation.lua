@@ -9,6 +9,7 @@ local CurrencyInfo =
 		{
 			Name = "CanTransferCurrency",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -33,6 +34,7 @@ local CurrencyInfo =
 		{
 			Name = "DoesWarModeBonusApply",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -48,6 +50,7 @@ local CurrencyInfo =
 		{
 			Name = "ExpandCurrencyList",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -59,6 +62,7 @@ local CurrencyInfo =
 			Name = "FetchCurrencyDataFromAccountCharacters",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -92,6 +96,7 @@ local CurrencyInfo =
 			Name = "GetBackpackCurrencyInfo",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -107,6 +112,7 @@ local CurrencyInfo =
 			Name = "GetBasicCurrencyInfo",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -122,6 +128,7 @@ local CurrencyInfo =
 		{
 			Name = "GetCoinIcon",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -136,6 +143,7 @@ local CurrencyInfo =
 		{
 			Name = "GetCoinText",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -151,6 +159,7 @@ local CurrencyInfo =
 		{
 			Name = "GetCoinTextureString",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -166,6 +175,7 @@ local CurrencyInfo =
 		{
 			Name = "GetCostToTransferCurrency",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -182,6 +192,7 @@ local CurrencyInfo =
 			Name = "GetCurrencyContainerInfo",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -197,6 +208,7 @@ local CurrencyInfo =
 		{
 			Name = "GetCurrencyDescription",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -220,6 +232,7 @@ local CurrencyInfo =
 		{
 			Name = "GetCurrencyIDFromLink",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -235,6 +248,7 @@ local CurrencyInfo =
 			Name = "GetCurrencyInfo",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -250,6 +264,7 @@ local CurrencyInfo =
 			Name = "GetCurrencyInfoFromLink",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -264,6 +279,7 @@ local CurrencyInfo =
 		{
 			Name = "GetCurrencyLink",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -280,6 +296,7 @@ local CurrencyInfo =
 			Name = "GetCurrencyListInfo",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -294,6 +311,7 @@ local CurrencyInfo =
 		{
 			Name = "GetCurrencyListLink",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -326,6 +344,7 @@ local CurrencyInfo =
 		{
 			Name = "GetFactionGrantedByCurrency",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 			Documentation = { "Gets the faction ID for currency that is immediately converted into reputation with that faction instead." },
 
 			Arguments =
@@ -341,6 +360,7 @@ local CurrencyInfo =
 		{
 			Name = "GetMaxTransferableAmountFromQuantity",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -356,6 +376,7 @@ local CurrencyInfo =
 		{
 			Name = "GetPlayerCurrencyCategoryInfo",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -389,6 +410,7 @@ local CurrencyInfo =
 		{
 			Name = "IsAccountTransferableCurrency",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -403,6 +425,7 @@ local CurrencyInfo =
 		{
 			Name = "IsAccountWideCurrency",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -417,6 +440,7 @@ local CurrencyInfo =
 		{
 			Name = "IsCurrencyContainer",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -450,6 +474,7 @@ local CurrencyInfo =
 		{
 			Name = "PickupCurrency",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -459,6 +484,7 @@ local CurrencyInfo =
 		{
 			Name = "PlayerHasMaxQuantity",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -473,6 +499,7 @@ local CurrencyInfo =
 		{
 			Name = "PlayerHasMaxWeeklyQuantity",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -492,6 +519,7 @@ local CurrencyInfo =
 			Name = "RequestCurrencyFromAccountCharacter",
 			Type = "Function",
 			HasRestrictions = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -503,6 +531,7 @@ local CurrencyInfo =
 		{
 			Name = "SetCurrencyBackpack",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -513,6 +542,7 @@ local CurrencyInfo =
 		{
 			Name = "SetCurrencyBackpackByID",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -524,6 +554,7 @@ local CurrencyInfo =
 			Name = "SetCurrencyFilter",
 			Type = "Function",
 			HasRestrictions = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -533,6 +564,7 @@ local CurrencyInfo =
 		{
 			Name = "SetCurrencyUnused",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -548,16 +580,19 @@ local CurrencyInfo =
 			Name = "AccountCharacterCurrencyDataReceived",
 			Type = "Event",
 			LiteralName = "ACCOUNT_CHARACTER_CURRENCY_DATA_RECEIVED",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "AccountMoney",
 			Type = "Event",
 			LiteralName = "ACCOUNT_MONEY",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "CurrencyDisplayUpdate",
 			Type = "Event",
 			LiteralName = "CURRENCY_DISPLAY_UPDATE",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "currencyType", Type = "number", Nilable = true },
@@ -571,6 +606,7 @@ local CurrencyInfo =
 			Name = "CurrencyTransferFailed",
 			Type = "Event",
 			LiteralName = "CURRENCY_TRANSFER_FAILED",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "failureReason", Type = "AccountCurrencyTransferResult", Nilable = false },
@@ -580,21 +616,25 @@ local CurrencyInfo =
 			Name = "CurrencyTransferInitiated",
 			Type = "Event",
 			LiteralName = "CURRENCY_TRANSFER_INITIATED",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "CurrencyTransferLogUpdate",
 			Type = "Event",
 			LiteralName = "CURRENCY_TRANSFER_LOG_UPDATE",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "CurrencyTransferSuccess",
 			Type = "Event",
 			LiteralName = "CURRENCY_TRANSFER_SUCCESS",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "PlayerMoney",
 			Type = "Event",
 			LiteralName = "PLAYER_MONEY",
+			SynchronousEvent = true,
 		},
 	},
 

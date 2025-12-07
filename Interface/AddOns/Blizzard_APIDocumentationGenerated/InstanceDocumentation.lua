@@ -19,6 +19,7 @@ local Instance =
 		{
 			Name = "CanMapChangeDifficulty",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -42,6 +43,7 @@ local Instance =
 		{
 			Name = "GetDifficultyInfo",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -114,6 +116,7 @@ local Instance =
 		{
 			Name = "GetInstanceLockTimeRemainingEncounter",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -159,6 +162,7 @@ local Instance =
 		{
 			Name = "IsLegacyDifficulty",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -177,6 +181,7 @@ local Instance =
 		{
 			Name = "SetDungeonDifficultyID",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -186,6 +191,7 @@ local Instance =
 		{
 			Name = "SetLegacyRaidDifficultyID",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -196,6 +202,7 @@ local Instance =
 		{
 			Name = "SetRaidDifficultyID",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{

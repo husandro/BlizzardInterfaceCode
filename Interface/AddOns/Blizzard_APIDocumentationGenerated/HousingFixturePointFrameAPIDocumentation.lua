@@ -55,6 +55,7 @@ local HousingFixturePointFrameAPI =
 		{
 			Name = "SetUpdateCallback",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{

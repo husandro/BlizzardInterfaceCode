@@ -42,6 +42,7 @@ function CatalogShopMixin:OnLoad_CatalogShop()
 	self:RegisterEvent("CATALOG_SHOP_OPEN_SIMPLE_CHECKOUT");
 	self:RegisterEvent("SIMPLE_CHECKOUT_CLOSED");
 	self:RegisterEvent("CATALOG_SHOP_PMT_IMAGE_DOWNLOADED");
+	self:RegisterEvent("CATALOG_SHOP_VIRTUAL_CURRENCY_BALANCE_UPDATE");
 	self:InitVariables();
 	EventRegistry:RegisterCallback("CatalogShop.OnProductSelected", self.OnProductSelected, self);
 	EventRegistry:RegisterCallback("CatalogShop.OnNoProductsSelected", self.OnNoProductsSelected, self);
@@ -51,7 +52,7 @@ function CatalogShopMixin:OnLoad_CatalogShop()
 	self:SetTitle(BLIZZARD_STORE);
 
 	if ( C_Glue.IsOnGlueScreen() ) then
-		self:SetFrameStrata("FULLSCREEN_DIALOG");
+		self:SetFrameStrata("FULLSCREEN");
 		-- block keys
 		self:EnableKeyboard(true);
 		self:SetScript("OnKeyDown",
@@ -345,6 +346,9 @@ function CatalogShopMixin:OnEvent_CatalogShop(event, ...)
 	elseif (event == "CATALOG_SHOP_PMT_IMAGE_DOWNLOADED") then
 		--	// Finish implementation when completing [WOW11-144188]
 		--...handle it
+	elseif event == "CATALOG_SHOP_VIRTUAL_CURRENCY_BALANCE_UPDATE" then
+		local currencyCode, balance = ...;
+		-- TODO (WOW12-40870): Implement this
 	end
 end
 
@@ -383,7 +387,7 @@ function CatalogShopMixin:OnShow()
 		GlueParent_AddModalFrame(self);
 	end
 	FrameUtil.UpdateScaleForFitSpecific(self, self:GetWidth() + CatalogShopConstants.ScreenPadding.Horizontal, self:GetHeight() + CatalogShopConstants.ScreenPadding.Vertical);
-	self.shoppingSessionUUIDStr = C_CatalogShop.OpenCatalogShopInteraction();
+	self.shoppingSessionUUIDStr = C_CatalogShop.OpenCatalogShopInteractionFromShop();
 end
 
 function CatalogShopMixin:OnHide()
@@ -451,6 +455,27 @@ function CatalogShopMixin:SetCatalogShopLinkTag(linkTag)
 	end
 end
 
+-- This is done in this way to keep the navigation mixin separate from as much of the internals of product linking as possible.
+-- The goal of this function is to prime linkTag such that if we are linking to a product we can also use the category link flow
+-- that works when we do simple category linking. See NavigationBarMixin:Init
+function CatalogShopMixin:SetCatalogShopLinkTagForLinkProduct()
+	if not self.linkProductID then
+		return;
+	end
+	local categoryInfo = C_CatalogShop.GetFirstCategoryByProductID(self.linkProductID);
+	if categoryInfo then
+		self.linkTag = categoryInfo.linkTag;
+	end
+end
+
+function CatalogShopMixin:GetCatalogShopLinkProductID()
+	return self.linkProductID; -- can be nil
+end
+
+function CatalogShopMixin:SetCatalogShopLinkProductID(linkProductID)
+	self.linkProductID = linkProductID;
+end
+
 function CatalogShopMixin:OnAttributeChanged(name, value)
 	--Note - Setting attributes is how the external UI should communicate with this frame. That way their taint won't be spread to this code.
 	if ( name == "action" ) then
@@ -491,6 +516,9 @@ function CatalogShopMixin:OnAttributeChanged(name, value)
 		self:SetCatalogShopLinkTag(CatalogShopConstants.CategoryLinks.Services);
 	elseif ( name == "selectboost") then
 		self:SetCatalogShopLinkTag(CatalogShopConstants.CategoryLinks.Services);
+	elseif ( name == "selectspecificproduct" ) then
+		local productID = value;
+		self:SetCatalogShopLinkProductID(productID);
 	end
 end
 

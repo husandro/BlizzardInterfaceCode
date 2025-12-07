@@ -17,6 +17,7 @@ local PetJournalInfo =
 		{
 			Name = "DismissSummonedPet",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -26,6 +27,7 @@ local PetJournalInfo =
 		{
 			Name = "GetDisplayIDByIndex",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -41,6 +43,7 @@ local PetJournalInfo =
 		{
 			Name = "GetDisplayProbabilityByIndex",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -56,6 +59,7 @@ local PetJournalInfo =
 		{
 			Name = "GetNonBattlePetLinkByIndex",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -70,6 +74,7 @@ local PetJournalInfo =
 		{
 			Name = "GetNumDisplays",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -84,6 +89,7 @@ local PetJournalInfo =
 		{
 			Name = "GetNumPetsInJournal",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -109,6 +115,7 @@ local PetJournalInfo =
 			Name = "GetPetAbilityInfo",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -126,6 +133,7 @@ local PetJournalInfo =
 			Name = "GetPetAbilityListTable",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -141,6 +149,7 @@ local PetJournalInfo =
 			Name = "GetPetInfoTableByPetID",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -156,6 +165,7 @@ local PetJournalInfo =
 			Name = "GetPetLoadOutInfo",
 			Type = "Function",
 			MayReturnNothing = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -174,6 +184,7 @@ local PetJournalInfo =
 		{
 			Name = "GetPetSummonInfo",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -208,6 +219,7 @@ local PetJournalInfo =
 		{
 			Name = "IsCurrentlySummoned",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -231,6 +243,7 @@ local PetJournalInfo =
 		{
 			Name = "PetIsSummonable",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -245,6 +258,7 @@ local PetJournalInfo =
 		{
 			Name = "PetUsesRandomDisplay",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -263,6 +277,7 @@ local PetJournalInfo =
 		{
 			Name = "SetHoveredBattlePet",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -272,6 +287,7 @@ local PetJournalInfo =
 		{
 			Name = "SetSearchFilter",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -281,6 +297,7 @@ local PetJournalInfo =
 		{
 			Name = "SpellTargetBattlePet",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -295,6 +312,7 @@ local PetJournalInfo =
 			Name = "BattlepetForceNameDeclension",
 			Type = "Event",
 			LiteralName = "BATTLEPET_FORCE_NAME_DECLENSION",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "name", Type = "cstring", Nilable = false },
@@ -305,16 +323,19 @@ local PetJournalInfo =
 			Name = "CompanionLearned",
 			Type = "Event",
 			LiteralName = "COMPANION_LEARNED",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "CompanionUnlearned",
 			Type = "Event",
 			LiteralName = "COMPANION_UNLEARNED",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "CompanionUpdate",
 			Type = "Event",
 			LiteralName = "COMPANION_UPDATE",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "companionType", Type = "cstring", Nilable = true },
@@ -324,6 +345,7 @@ local PetJournalInfo =
 			Name = "NewPetAdded",
 			Type = "Event",
 			LiteralName = "NEW_PET_ADDED",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "battlePetGUID", Type = "WOWGUID", Nilable = false },
@@ -333,6 +355,7 @@ local PetJournalInfo =
 			Name = "PetJournalAutoSlottedPet",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_AUTO_SLOTTED_PET",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "slotIndex", Type = "number", Nilable = false },
@@ -343,21 +366,26 @@ local PetJournalInfo =
 			Name = "PetJournalCageFailed",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_CAGE_FAILED",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "PetJournalListUpdate",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_LIST_UPDATE",
+			SynchronousEvent = true,
+			UniqueEvent = true,
 		},
 		{
 			Name = "PetJournalNewBattleSlot",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_NEW_BATTLE_SLOT",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "PetJournalPetDeleted",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_PET_DELETED",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "battlePetGUID", Type = "WOWGUID", Nilable = false },
@@ -367,6 +395,7 @@ local PetJournalInfo =
 			Name = "PetJournalPetRestored",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_PET_RESTORED",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "battlePetGUID", Type = "WOWGUID", Nilable = false },
@@ -376,6 +405,7 @@ local PetJournalInfo =
 			Name = "PetJournalPetRevoked",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_PET_REVOKED",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "battlePetGUID", Type = "WOWGUID", Nilable = false },
@@ -385,11 +415,13 @@ local PetJournalInfo =
 			Name = "PetJournalPetsHealed",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_PETS_HEALED",
+			SynchronousEvent = true,
 		},
 		{
 			Name = "PetJournalTrapLevelSet",
 			Type = "Event",
 			LiteralName = "PET_JOURNAL_TRAP_LEVEL_SET",
+			SynchronousEvent = true,
 			Payload =
 			{
 				{ Name = "trapLevel", Type = "number", Nilable = false },
@@ -399,6 +431,7 @@ local PetJournalInfo =
 			Name = "UpdateSummonpetsAction",
 			Type = "Event",
 			LiteralName = "UPDATE_SUMMONPETS_ACTION",
+			SynchronousEvent = true,
 		},
 	},
 

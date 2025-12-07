@@ -1158,7 +1158,7 @@ function CatalogShopUtil.SetServicesContainerIcon(icon, displayInfo)
 		local formattedIcon = ("%s-large"):format(displayInfo.iconTextureKit);
 		icon:SetAtlas(formattedIcon);
 	elseif displayInfo.iconFileDataID then
-		SetPortraitToTexture(icon, displayInfo.iconFileDataID);
+		icon:SetTexture(displayInfo.iconFileDataID);
 	end
 end
 
@@ -1169,6 +1169,9 @@ function CatalogShopUtil.SetAlternateProductIcon(icon, displayInfo)
 end
 
 local function IsWeapon(categoryID)
+	if not categoryID then
+		return false;
+	end
 	local firstWeaponCategory = Enum.TransmogCollectionType.Wand;
 	local lastWeaponCategory = Enum.TransmogCollectionType.Warglaives;
 	if categoryID >= firstWeaponCategory and categoryID <= lastWeaponCategory then
@@ -1190,7 +1193,8 @@ function CatalogShopUtil.ItemAppearancesHaveSameCategory(itemModifiedAppearanceI
 	local usingWeaponBucket = false;
 
 	for i, itemModifiedAppearanceID in ipairs(itemModifiedAppearanceIDs) do
-		local categoryID = C_TransmogCollection.GetAppearanceSourceInfo(itemModifiedAppearanceID);
+		local categoryInfo = C_TransmogCollection.GetAppearanceSourceInfo(itemModifiedAppearanceID);
+		local categoryID = categoryInfo and categoryInfo.category or nil;
 		if not firstCategoryID then
 			firstCategoryID = categoryID;
 			if IsWeapon(firstCategoryID) then

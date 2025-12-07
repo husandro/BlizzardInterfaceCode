@@ -1028,6 +1028,8 @@ local function CallInitializers(frame, menu, compositor)
 end
 
 local function ResetMenuElement(pool, frame, new)
+	frame:SetToDefaults();
+
 	if not new then
 		TryHideTooltip(frame);
 
@@ -1109,15 +1111,13 @@ function MenuMixin:SetMenuDescription(menuDescription)
 		
 		local isCompositorEnabled = menuDescription:IsCompositorEnabled();
 		local function Factory(frameTemplateOrFrameType, initializer)
-			local childFrame, new, templateInfo = securecallfunction(AcquireMenuElement, frameDummy, frameTemplateOrFrameType, ResetMenuElement)
+			local childFrame, _new, templateInfo = securecallfunction(AcquireMenuElement, frameDummy, frameTemplateOrFrameType, ResetMenuElement)
 			if not childFrame then
 				error(string.format("MenuMixin:SetMenuDescription: Failed to create a frame from pool for frame template or frame type '%s'", frameTemplateOrFrameType));
 			end
 			
-			if new then
-				-- ID is for our test harness, it has no significance elsewhere.
-				childFrame:SetID(1001);
-			end
+			-- ID is for our test harness, it has no significance elsewhere.
+			childFrame:SetID(1001);
 
 			factoryArgs.childFrame = childFrame;
 			factoryArgs.initializer = initializer;
@@ -2042,11 +2042,9 @@ function MenuManagerMixin:AcquireMenu(params)
 	Menus are parented to WorldFrame because UIParent is hidden in certain fullscreen UIs.
 	We apply the scale of the appropriate parent to the menu to get the desired base scale.
 	]]--
-	local proxy, new = securecallfunction(AcquireMenuFrame, self);
-	if new then
-		-- ID is for our test harness, it has no significance elsewhere.
-		proxy:SetID(1000);
-	end
+	local proxy = securecallfunction(AcquireMenuFrame, self);
+	-- ID is for our test harness, it has no significance elsewhere.
+	proxy:SetID(1000);
 	--assert(select("#", proxy:GetRegions()) == 0);
 	--assert(select("#", proxy:GetChildren()) == 0);
 

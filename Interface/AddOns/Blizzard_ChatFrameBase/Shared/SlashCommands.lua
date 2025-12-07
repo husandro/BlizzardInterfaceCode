@@ -158,7 +158,7 @@ SLASH_COMMAND = {
 	SPECTATOR_SOLOSHUFFLE_WARGAME = "SPECTATOR_SOLOSHUFFLE_WARGAME",
 	SPECTATOR_SOLORBG_WARGAME = "SPECTATOR_SOLORBG_WARGAME",
 	GUILDFINDER = "GUILDFINDER",
-	TRANSMOG_OUTFIT = "TRANSMOG_OUTFIT",
+	TRANSMOG_CUSTOM_SET = "TRANSMOG_CUSTOM_SET",
 	COMMUNITY = "COMMUNITY",
 	RAF = "RAF",
 	EDITMODE = "EDITMODE",
@@ -440,7 +440,7 @@ SlashCommandUtil.CheckAddSecureSlashCommand(SLASH_COMMAND.CHANGEACTIONBAR, SLASH
 	if ( page and page ~= "" ) then
 		page = tonumber(page);
 		if (page and page >= 1 and page <= NUM_ACTIONBAR_PAGES) then
-			ChangeActionBarPage(page);
+			C_ActionBar.SetActionBarPage(page);
 		else
 			ChatFrameUtil.DisplayUsageError(format(ERROR_SLASH_CHANGEACTIONBAR, 1, NUM_ACTIONBAR_PAGES));
 		end
@@ -455,10 +455,10 @@ SlashCommandUtil.CheckAddSecureSlashCommand(SLASH_COMMAND.SWAPACTIONBAR, SLASH_C
 			a = tonumber(a);
 			b = tonumber(b);
 			if ( ( a and a >= 1 and a <= NUM_ACTIONBAR_PAGES ) and ( b and b >= 1 and b <= NUM_ACTIONBAR_PAGES ) ) then
-				if ( GetActionBarPage() == a ) then
-					ChangeActionBarPage(b);
+				if ( C_ActionBar.GetActionBarPage() == a ) then
+					C_ActionBar.SetActionBarPage(b);
 				else
-					ChangeActionBarPage(a);
+					C_ActionBar.SetActionBarPage(a);
 				end
 			else
 				ChatFrameUtil.DisplayUsageError(format(ERROR_SLASH_SWAPACTIONBAR, 1, NUM_ACTIONBAR_PAGES));

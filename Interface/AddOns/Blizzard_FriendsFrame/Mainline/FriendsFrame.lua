@@ -2020,7 +2020,7 @@ function FriendsBroadcastFrameMixin:SetBroadcast()
 	local newBroadcastText = self.EditBox:GetText();
 	local _, _, _, broadcastText = BNGetInfo();
 	if newBroadcastText ~= broadcastText then
-		BNSetCustomMessage(newBroadcastText);
+		C_BattleNet.SetCustomMessage(newBroadcastText);
 	end
 	self:HideFrame();
 end

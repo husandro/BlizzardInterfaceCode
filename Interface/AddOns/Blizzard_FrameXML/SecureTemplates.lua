@@ -253,6 +253,10 @@ local forceinsecure = forceinsecure;
 -- Table of supported action functions
 local SECURE_ACTIONS = {};
 
+SECURE_ACTIONS.menu = function(self, unit, button, isKeyPress)
+	self:ExecuteAttribute("menu-function", unit, button, isKeyPress);
+end
+
 SECURE_ACTIONS.togglemenu = function(self, unit, button)
 	if not unit then 
 		return;
@@ -313,13 +317,13 @@ SECURE_ACTIONS.actionbar =
         elseif ( action == "decrement" ) then
             ActionBar_PageDown();
         elseif ( tonumber(action) ) then
-            ChangeActionBarPage(action);
+            C_ActionBar.SetActionBarPage(action);
         else
             local a, b = strmatch(action, "^(%d+),%s*(%d+)$");
-            if ( GetActionBarPage() == tonumber(a) ) then
-                ChangeActionBarPage(b);
+            if ( C_ActionBar.GetActionBarPage() == tonumber(a) ) then
+                C_ActionBar.SetActionBarPage(b);
             else
-                ChangeActionBarPage(a);
+                C_ActionBar.SetActionBarPage(a);
             end
         end
     end;
@@ -596,11 +600,11 @@ function SecureActionButtonMixin:CalculateAction(button)
     if ( self:GetID() > 0 ) then
         local page = SecureButton_GetModifiedAttribute(self, "actionpage", button);
         if ( not page ) then
-            page = GetActionBarPage();
+            page = C_ActionBar.GetActionBarPage();
             if ( self.isExtra ) then
-                page = GetExtraBarIndex();
+                page = C_ActionBar.GetExtraBarIndex();
             elseif ( self.buttonType == "MULTICASTACTIONBUTTON" ) then
-                page = GetMultiCastBarIndex();
+                page = C_ActionBar.GetMultiCastBarIndex();
             end
         end
         return (self:GetID() + ((page - 1) * NUM_ACTIONBAR_BUTTONS));
@@ -662,8 +666,9 @@ local function PerformAction(self, button, unit, actionType, down, isKeyPress)
 			handler = SecureButton_GetModifiedAttribute(self, "_"..actionType, button);
 		end
 		if not handler then
-			atRisk = false;
-			-- functions retrieved from table keys carry their own taint
+			-- There exist a few means for this lookup to return user-provided
+			-- functions that don't carry taint, so consider this to be at-risk.
+			atRisk = true;
 			handler = rawget(self, actionType);
 		end
 		if type(handler) == 'function' then
@@ -751,7 +756,7 @@ function SecureUnitButton_OnLoad(self, unit, menufunc)
     self:SetAttribute("*type1", "target");
     self:SetAttribute("*type2", "menu");
     self:SetAttribute("unit", unit);
-    self.menu = menufunc;
+    self:SetAttribute("menu-function", menufunc);
 end
 
 function SecureUnitButton_OnClick(self, button, down)

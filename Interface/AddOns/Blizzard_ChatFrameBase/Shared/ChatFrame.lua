@@ -23,7 +23,7 @@ function ChatFrameMixin:OnHyperlinkClick(link, text, button)
 end
 
 function ChatFrameMixin:AddMessage(...)
-	ScrollingMessageFrameMixin.AddMessage(self, ...);
+	ScrollingMessageFrameSecureMixin.AddMessage(self, ...);
 
 	if ( self.addMessageObserver ) then
 		self.addMessageObserver(self, ...);
@@ -258,9 +258,9 @@ function ChatFrameMixin:UpdateDefaultChatTarget()
 	local defaultChatType, defaultChannelTarget = self:GetDefaultChatTarget();
 	if defaultChatType then
 		local editBox = self.editBox;
-		editBox:SetAttribute("chatType", defaultChatType);
-		editBox:SetAttribute("stickyType", defaultChatType);
-		editBox:SetAttribute("channelTarget", defaultChannelTarget);
+		editBox:SetChatType(defaultChatType);
+		editBox:SetStickyType(defaultChatType);
+		editBox:SetChannelTarget(defaultChannelTarget);
 		editBox:UpdateHeader();
 	end
 end

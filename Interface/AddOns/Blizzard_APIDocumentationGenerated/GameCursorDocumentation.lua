@@ -62,6 +62,7 @@ local GameCursor =
 		{
 			Name = "EquipCursorItem",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -85,6 +86,7 @@ local GameCursor =
 			Name = "PickupPlayerMoney",
 			Type = "Function",
 			HasRestrictions = true,
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -102,6 +104,7 @@ local GameCursor =
 		{
 			Name = "SetCursor",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -116,6 +119,7 @@ local GameCursor =
 		{
 			Name = "SetCursorByMode",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -130,6 +134,7 @@ local GameCursor =
 		{
 			Name = "SetCursorHoveredItem",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -139,6 +144,7 @@ local GameCursor =
 		{
 			Name = "SetCursorHoveredItemTradeItem",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
@@ -148,6 +154,7 @@ local GameCursor =
 		{
 			Name = "SetCursorVirtualItem",
 			Type = "Function",
+			SecretArguments = "AllowedWhenUntainted",
 
 			Arguments =
 			{
