@@ -169,6 +169,30 @@
 					<Anchor point="LEFT" relativeKey="$parent.PrivateAuraAnchor1" relativePoint="RIGHT"/>
 				</Anchors>
 			</Frame>
+			<Frame parentKey="PrivateAuraAnchor3" inherits="CompactUnitPrivateAuraAnchorTemplate">
+				<KeyValues>
+					<KeyValue key="auraIndex" value="3" type="number"/>
+				</KeyValues>
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.PrivateAuraAnchor2" relativePoint="RIGHT"/>
+				</Anchors>
+			</Frame>
+			<Frame parentKey="PrivateAuraAnchor4" inherits="CompactUnitPrivateAuraAnchorTemplate">
+				<KeyValues>
+					<KeyValue key="auraIndex" value="4" type="number"/>
+				</KeyValues>
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.PrivateAuraAnchor3" relativePoint="RIGHT"/>
+				</Anchors>
+			</Frame>
+			<Frame parentKey="PrivateAuraAnchor5" inherits="CompactUnitPrivateAuraAnchorTemplate">
+				<KeyValues>
+					<KeyValue key="auraIndex" value="5" type="number"/>
+				</KeyValues>
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.PrivateAuraAnchor4" relativePoint="RIGHT"/>
+				</Anchors>
+			</Frame>
 			<Button name="$parentDispelDebuff1" inherits="CompactDispelDebuffTemplate"/>
 			<Button name="$parentDispelDebuff2" inherits="CompactDispelDebuffTemplate"/>
 			<Button name="$parentDispelDebuff3" inherits="CompactDispelDebuffTemplate"/>
