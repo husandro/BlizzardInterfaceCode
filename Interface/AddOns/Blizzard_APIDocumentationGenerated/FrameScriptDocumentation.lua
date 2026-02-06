@@ -134,6 +134,23 @@ local FrameScript =
 			Documentation = { "Removes the ability for the immediate calling function to access secret values." },
 		},
 		{
+			Name = "dumpobject",
+			Type = "Function",
+			SecureHooksAllowed = false,
+			SecretArguments = "AllowedWhenUntainted",
+			Documentation = { "Invokes the '__dump' metamethod on any value (if present), returning its result." },
+
+			Arguments =
+			{
+				{ Name = "value", Type = "LuaValueReference", Nilable = true },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "LuaValueReference", Nilable = true },
+			},
+		},
+		{
 			Name = "GetCallstackHeight",
 			Type = "Function",
 
@@ -377,6 +394,25 @@ local FrameScript =
 			Returns =
 			{
 				{ Name = "wrapped", Type = "LuaValueReference", Nilable = false, StrideIndex = 1 },
+			},
+		},
+		{
+			Name = "securecallmethod",
+			Type = "Function",
+			SecureHooksAllowed = false,
+			SecretArguments = "AllowedWhenUntainted",
+			Documentation = { "Invokes a named method on an object with a secure call barrier that prevents errors or taint from function lookup and execution from propagating to the caller." },
+
+			Arguments =
+			{
+				{ Name = "object", Type = "LuaValueReference", Nilable = false, Documentation = { "The table on which to look up the named method from. Lookup of the method uses raw access and ignores any associated metatable." } },
+				{ Name = "method", Type = "cstring", Nilable = false, Documentation = { "The name of a method to retrieve." } },
+				{ Name = "arguments", Type = "LuaValueReference", Nilable = false, StrideIndex = 1, Documentation = { "Arguments to supply to the method. The initial 'object' parameter is always supplied as the first argument, followed by these values." } },
+			},
+
+			Returns =
+			{
+				{ Name = "results", Type = "LuaValueReference", Nilable = false, StrideIndex = 1, Documentation = { "Results from the executed function. If an error occurred, this result list will be empty." } },
 			},
 		},
 		{
