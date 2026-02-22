@@ -4,3 +4,4 @@
 exportInterfaceFiles code
 exportInterfaceFiles art
 
+/run SetConsoleKey("F9")
